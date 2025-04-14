@@ -1,0 +1,73 @@
+
+body {
+  margin: 0;
+  font-family: 'Arial Black', sans-serif;
+  background: linear-gradient(to bottom, #003366, #00bfff);
+  text-align: center;
+  color: #000;
+}
+
+.logo-container {
+  margin-top: 10px;
+}
+
+.logo {
+  width: 100px;
+}
+
+.tablero {
+  display: grid;
+  grid-template-columns: repeat(15, 40px);
+  justify-content: center;
+  gap: 10px;
+  margin: 20px;
+}
+
+button.numero {
+  background: linear-gradient(to bottom, #ffcc00, #ffaa00);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-weight: bold;
+  color: black;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button.numero.marcado {
+  background: white;
+  color: black;
+}
+
+.info-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 20px;
+}
+
+.info-box {
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 10px;
+}
+
+.blanco {
+  background: white;
+  color: black;
+}
+
+.rojo {
+  background: linear-gradient(to right, red, orange);
+  color: black;
+}
+
+.reset {
+  background: orange;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
