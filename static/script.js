@@ -1,0 +1,1 @@
+function resetear() { alert('Resetear no implementado aún.'); }
