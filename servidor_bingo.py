@@ -14,8 +14,8 @@ def guardar():
     tree = ET.parse(XML_PATH)
     root = tree.getroot()
 
-    balotas = root.findall("balota")
-    for balota in balotas:
+    balota = root.findall("balota")
+    for balota in balota:
         if balota.get("NUMERO") == numero:
             balota.set("ESTADO", numero)
             balota.set("ULTIMO", numero)
@@ -23,10 +23,10 @@ def guardar():
             balota.set("ULTIMO", "")
 
     # Actualizar ULTIMO_NUMERO_GLOBAL en la primera balota
-    if balotas:
-        for b in balotas:
+    if balota:
+        for b in balota:
             b.set("ULTIMO_NUMERO_GLOBAL", "")
-        balotas[0].set("ULTIMO_NUMERO_GLOBAL", numero)
+        balota[0].set("ULTIMO_NUMERO_GLOBAL", numero)
 
     tree.write(XML_PATH, encoding="utf-8", xml_declaration=True)
     return "Guardado"
