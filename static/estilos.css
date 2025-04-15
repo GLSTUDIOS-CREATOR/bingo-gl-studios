@@ -1,0 +1,51 @@
+
+body {
+    background: linear-gradient(to bottom right, #007BFF, #00CFFF);
+    font-family: 'Segoe UI', sans-serif;
+    color: #000;
+    text-align: center;
+}
+.logo {
+    width: 120px;
+    margin: 10px auto;
+}
+.titulo {
+    font-size: 28px;
+    color: white;
+}
+.numeros {
+    display: grid;
+    grid-template-columns: repeat(15, 40px);
+    gap: 10px;
+    justify-content: center;
+    margin: 20px auto;
+}
+.numero {
+    background: gold;
+    color: black;
+    font-weight: bold;
+    border-radius: 50%;
+    border: none;
+    height: 40px;
+    width: 40px;
+    cursor: pointer;
+}
+.numero.activo {
+    background: white;
+}
+.panel-info {
+    margin: 20px auto;
+    padding: 10px;
+    color: white;
+    font-weight: bold;
+}
+.reset-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
