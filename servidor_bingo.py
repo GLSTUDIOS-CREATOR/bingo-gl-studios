@@ -1,59 +1,68 @@
-
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, send_from_directory
 import xml.etree.ElementTree as ET
 import os
 
 app = Flask(__name__)
-XML_PATH = os.path.join("static", "datos_bingo.xml")
 
-@app.route("/")
-def index():
-    return send_from_directory("static", "PANEL_BINGO_75.html")
+RUTA_XML = os.path.join('static', 'datos_bingo.xml')
 
-@app.route("/guardar", methods=["POST"])
+@app.route('/')
+def home():
+    return send_from_directory('static', 'PANEL_BINGO_75.html')
+
+@app.route('/xml')
+def obtener_xml():
+    return send_from_directory('static', 'datos_bingo.xml')
+
+@app.route('/guardar', methods=['POST'])
 def guardar():
-    numero = request.form.get("numero")
-
+    numero = request.form.get('numero')
     if not numero:
-        return jsonify({"error": "Número no proporcionado"}), 400
+        return 'Número no recibido', 400
 
-    tree = ET.parse(XML_PATH)
+    tree = ET.parse(RUTA_XML)
     root = tree.getroot()
 
-    for balota in root.findall("balota"):
-        num = balota.find("NUMERO").text
-        if num == numero:
-            balota.find("ESTADO").text = numero
-            balota.find("ULTIMO").text = numero
-        else:
-            balota.find("ULTIMO").text = ""
+    # Reiniciar ULTIMO en todas las balotas
+    for balota in root.findall('balota'):
+        balota.set('ULTIMO', '')
 
-    # Actualizar ULTIMO_NUMERO_GLOBAL en la primera balota solamente
-    primera = root.findall("balota")[0]
-    if primera.find("ULTIMO_NUMERO_GLOBAL") is not None:
-        primera.find("ULTIMO_NUMERO_GLOBAL").text = numero
+    # Buscar la balota correspondiente
+    balota_objetivo = None
+    for balota in root.findall('balota'):
+        if balota.get('NUMERO') == numero:
+            balota.set('ESTADO', numero)
+            balota.set('ULTIMO', numero)
+            balota_objetivo = balota
 
-    tree.write(XML_PATH, encoding="utf-8", xml_declaration=True)
-    return jsonify({"message": "Número guardado correctamente"})
+    # Si no se encontró la balota, retornar error
+    if not balota_objetivo:
+        return 'Número no encontrado', 404
 
-@app.route("/reset", methods=["POST"])
+    # Limpiar ULTIMO_NUMERO_GLOBAL en todas las balotas
+    for balota in root.findall('balota'):
+        balota.set('ULTIMO_NUMERO_GLOBAL', '')
+
+    # Colocar el ULTIMO_NUMERO_GLOBAL solo en la primera balota
+    primera_balota = root.find('balota')
+    if primera_balota is not None:
+        primera_balota.set('ULTIMO_NUMERO_GLOBAL', numero)
+
+    tree.write(RUTA_XML, encoding='utf-8', xml_declaration=True)
+    return 'Número guardado', 200
+
+@app.route('/reset', methods=['POST'])
 def reset():
-    tree = ET.parse(XML_PATH)
+    tree = ET.parse(RUTA_XML)
     root = tree.getroot()
 
-    for balota in root.findall("balota"):
-        balota.find("ESTADO").text = ""
-        balota.find("ULTIMO").text = ""
-        ultimo_global = balota.find("ULTIMO_NUMERO_GLOBAL")
-        if ultimo_global is not None:
-            ultimo_global.text = ""
+    for balota in root.findall('balota'):
+        balota.set('ESTADO', '')
+        balota.set('ULTIMO', '')
+        balota.set('ULTIMO_NUMERO_GLOBAL', '')
 
-    tree.write(XML_PATH, encoding="utf-8", xml_declaration=True)
-    return jsonify({"message": "XML reseteado correctamente"})
+    tree.write(RUTA_XML, encoding='utf-8', xml_declaration=True)
+    return 'Reseteado', 200
 
-@app.route("/xml")
-def servir_xml():
-    return send_from_directory("static", "datos_bingo.xml")
-
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
