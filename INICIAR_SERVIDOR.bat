@@ -1,1 +1,0 @@
-start cmd /k "python servidor_bingo.py"
