@@ -64,7 +64,7 @@ def static_files(filename):
 
 @app.route("/")
 def inicio():
-    return send_from_directory("static", "PANEL_BINGO_75.html")
+    return send_from_directory(".", "PANEL_BINGO_75.html")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
