@@ -1,5 +1,0 @@
-cd "C:\Users\Geovanny Lara\Desktop\GL_Server"
-python app.py
-
-
-
