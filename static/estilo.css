@@ -1,0 +1,108 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    background: url('../static/fondo.jpg') no-repeat center center fixed;
+    background-size: cover;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+header img {
+    height: 80px;
+}
+
+h1 {
+    margin: 10px 0 0;
+    font-size: 32px;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px #000;
+}
+
+#tablero {
+    display: grid;
+    grid-template-columns: repeat(15, 50px);
+    gap: 8px;
+    justify-content: center;
+    margin: 30px auto;
+    max-width: 850px;
+}
+
+.numero {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(to bottom, #ffd000, #ffb800);
+    border: 2px solid #999;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 10px;
+    transition: transform 0.1s ease;
+}
+
+.numero:hover {
+    transform: scale(1.1);
+}
+
+.numero.marcado {
+    background: linear-gradient(to bottom, #ff5733, #ff0000);
+    color: white;
+    border: 2px solid #aa0000;
+}
+
+#info {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin: 20px auto;
+}
+
+.box {
+    padding: 20px;
+    border-radius: 12px;
+    min-width: 250px;
+    font-size: 18px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+#totalBox {
+    background: white;
+    color: #0055aa;
+    border: 2px solid #0055aa;
+}
+
+#ultimosBox {
+    background: #cc0000;
+    color: white;
+    border: 2px solid #990000;
+}
+
+* {
+    font-weight: 900; /* Ultra black */
+}
+
+.boton-reset {
+    margin-top: 30px;
+    padding: 12px 28px;
+    font-size: 18px;
+    border-radius: 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.boton-reset:hover {
+    transform: scale(1.05);
+    background-color: #218838;
+}
+

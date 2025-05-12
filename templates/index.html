@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>GL SERVER BINGO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="GL Studios Logo">
+        <h1>GL SERVER BINGO</h1>
+    </header>
+
+    <div id="tablero">
+        {% for i in range(1,76) %}
+        <button class="numero" data-num="{{ i }}">{{ i }}</button>
+        {% endfor %}
+    </div>
+
+    <div id="info">
+        <div class="box" id="totalBox">
+            <p>Total Marcados: <span id="totalMarcados">0</span></p>
+        </div>
+        <div class="box" id="ultimosBox">
+            <p>Últimos 5 Números: <span id="ultimos5">Ninguno aún</span></p>
+        </div>
+    </div>
+    <button onclick="resetear()" class="boton-reset">
+        RESETAR TODO
+    </button>
+    
+    
+
+    <script>
+        document.querySelectorAll('.numero').forEach(button => {
+            button.addEventListener('click', () => {
+                const num = button.getAttribute('data-num');
+                fetch('/marcar_numero', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ numero: num })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    button.classList.toggle('marcado', data.marcado);
+                    document.getElementById('totalMarcados').textContent = data.totalMarcados;
+                    document.getElementById('ultimos5').textContent = data.ultimos5.join(', ') || 'Ninguno aún';
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+        
+        // ✅ Agrega aquí la función de reset
+        function resetear() {
+            fetch('/resetear', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    alert('¡Bingo reiniciado!');
+                    location.reload();
+                }
+            });
+        }
+        </script>
+        
+</body>
+</html>
