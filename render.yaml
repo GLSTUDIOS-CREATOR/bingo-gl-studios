@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: mi-app-bingo
-    env: python
-    buildCommand: ""
-    startCommand: python servidor.py
