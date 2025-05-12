@@ -1,0 +1,11 @@
+cd "C:\Users\Geovanny Lara\Desktop\GL_Server"
+python app.py
+
+
+
+http://127.0.0.1:5000
+
+
+
+
+
