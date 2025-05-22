@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard GL Studios</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:900,700,500,400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 60% 10%, #181b28 50%, #040611 120%);
+      color: #f4f6fa;
+      letter-spacing: .015em;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .main-content {
+      display: flex;
+      flex-direction: row;
+      gap: 54px;
+      align-items: flex-start;
+      width: 98vw;
+      max-width: 1700px;
+      margin: 60px 0;
+      justify-content: center;
+    }
+    /* --- Resumen de caja --- */
+    .summary-hero {
+      min-width: 540px;
+      max-width: 650px;
+      background: rgba(22,27,38,0.96);
+      border-radius: 38px;
+      box-shadow: 0 18px 60px #00153c6c, 0 3px 16px #00d2f233;
+      border: 2.5px solid #363b4dcc;
+      padding: 55px 55px 54px 55px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: visible;
+    }
+    .summary-title {
+      font-size: 2.8em;
+      font-weight: 900;
+      margin-bottom: 48px;
+      letter-spacing: 1.7px;
+      color: #ffe135;
+      text-shadow: 0 5px 40px #000, 0 2px 24px #ffe13544;
+      align-self: flex-start;
+      margin-left: 4px;
+    }
+    .summary-cards {
+      display: flex; flex-wrap: wrap;
+      gap: 34px 34px;
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .summary-card {
+      background: linear-gradient(120deg, #242b4a 70%, #354377 110%);
+      border-radius: 24px;
+      box-shadow: 0 6px 32px #153a8e26;
+      padding: 34px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 225px; min-height: 145px;
+      flex: 1 1 45%;
+      position: relative;
+      transition: transform .12s, box-shadow .13s;
+      border: 2px solid #21285344;
+    }
+    .summary-card:hover {
+      transform: scale(1.035) translateY(-8px);
+      box-shadow: 0 14px 54px #ffe13588, 0 2px 18px #ffe13522;
+      border: 2.4px solid #ffe135bb;
+    }
+    .summary-icon {
+      width: 56px; height: 56px;
+      border-radius: 13px;
+      font-size: 2.6em;
+      background: linear-gradient(135deg, #ffe135 55%, #fffbe7 120%);
+      color: #233664;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 16px #ffe13540;
+      border: 2px solid #ffe13599;
+    }
+    .summary-label {
+      font-size: 1.17em;
+      font-weight: 700;
+      color: #e6eaff;
+      margin-bottom: 7px;
+      text-shadow: 0 2px 12px #0b131d33;
+    }
+    .summary-value {
+      font-size: 2.3em;
+      font-weight: 900;
+      color: #ffe135;
+      text-shadow: 0 2px 22px #ffe13535, 0 1px 1px #233664bb;
+      margin-top: 4px;
+      letter-spacing: .025em;
+      transition: color .18s;
+    }
+    /* --- Panel opciones --- */
+    .options-panel {
+      background: rgba(17,19,28,0.98);
+      border-radius: 38px;
+      box-shadow: 0 14px 56px #00234e44, 0 2px 18px #2276d821;
+      padding: 48px 64px 60px 64px;
+      min-width: 440px;
+      display: flex; flex-direction: column; align-items: center;
+      position: relative;
+      border: 2.5px solid #283e75cc;
+    }
+    .logo-center {
+      width: 112px;
+      margin-bottom: 18px;
+    }
+    .logo-center img {
+      width: 100%; filter: drop-shadow(0 2px 16px #1067e6a3);
+    }
+    .options-title {
+      font-size: 2.01em;
+      color: #ffe135;
+      font-weight: 900;
+      margin-bottom: 37px;
+      text-align: center;
+      letter-spacing: 1.3px;
+      text-shadow: 0 2px 12px #ffe13540;
+    }
+    .crear-btn {
+      width: 100%;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg,#ffe135 80%,#ffe97e 100%);
+      color: #23253a;
+      font-weight: 800;
+      font-size: 1.19em;
+      border: none;
+      border-radius: 12px;
+      padding: 19px 30px;
+      cursor: pointer;
+      box-shadow: 0 6px 24px #ffe13533;
+      display: flex; align-items: center; gap: 18px;
+      transition: background .18s, color .13s, transform .09s;
+      text-decoration: none;
+      letter-spacing: 0.95px;
+    }
+    .crear-btn .crear-ico {
+      background: #fffde4;
+      border-radius: 10px;
+      width: 38px; height: 38px;
+      font-size: 1.25em;
+      display: flex; align-items: center; justify-content: center;
+      color: #104e8b;
+      border: 1.5px solid #ffe135;
+    }
+    .crear-btn:hover {
+      background: linear-gradient(90deg,#ffd21c 80%, #ffe364 100%);
+      color: #104e8b;
+      box-shadow: 0 10px 32px #ffe13588;
+      transform: scale(1.035);
+    }
+    .crear-btn:hover .crear-ico { background: #ffe135; color: #23253a; }
+
+    /* Botones de menú */
+    .menu-btn {
+      width: 100%;
+      display: flex; align-items: center;
+      gap: 22px;
+      background: linear-gradient(90deg,#232654 70%, #0b1534 100%);
+      color: #f5f8fa;
+      font-weight: 700;
+      font-size: 1.21em;
+      border: none;
+      border-radius: 14px;
+      padding: 21px 30px;
+      margin-bottom: 23px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px #00336219;
+      letter-spacing: 0.95px;
+      transition: background .15s, color .13s, transform .1s;
+      text-decoration: none;
+      position: relative;
+    }
+    .menu-btn .menu-ico {
+      width: 46px; height: 46px;
+      font-size: 1.6em;
+      background: #1a1b2c;
+      border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      margin-right: 2px;
+      color: #ffe135;
+      border: 1.7px solid #ffe13577;
+      box-shadow: 0 2px 10px #02224d13;
+      transition: background .15s, color .13s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg,#ffe135 65%,#ffe364 100%);
+      color: #1a2846;
+      transform: translateY(-5px) scale(1.04);
+      box-shadow: 0 10px 32px #ffe135a0;
+    }
+    .menu-btn:hover .menu-ico {
+      background: #fff;
+      color: #ffe135;
+      border-color: #ffe135;
+    }
+    /* Botón asignar planillas */
+    .planilla-btn {
+      width: 100%;
+      margin-bottom: 23px;
+      background: linear-gradient(90deg,#1e8449 70%,#27ae60 100%);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.17em;
+      border: none;
+      border-radius: 12px;
+      padding: 19px 30px;
+      cursor: pointer;
+      box-shadow: 0 6px 24px #3fffa244;
+      display: flex; align-items: center; gap: 18px;
+      transition: background .18s, color .13s, transform .09s;
+      text-decoration: none;
+      letter-spacing: 0.95px;
+      border: 1.5px solid #27ae60;
+    }
+    .planilla-btn .planilla-ico {
+      background: #d4ffe7;
+      border-radius: 10px;
+      width: 38px; height: 38px;
+      font-size: 1.2em;
+      display: flex; align-items: center; justify-content: center;
+      color: #1e8449;
+      border: 1.5px solid #1e8449;
+    }
+    .planilla-btn:hover {
+      background: linear-gradient(90deg,#27ae60 70%,#a4ffa7 100%);
+      color: #145933;
+      box-shadow: 0 10px 32px #2ecc4066;
+      transform: scale(1.035);
+      border-color: #a4ffa7;
+    }
+    .planilla-btn:hover .planilla-ico { background: #a4ffa7; color: #1e8449; }
+    @media (max-width: 1100px) {
+      .main-content { flex-direction: column; align-items: center; gap: 30px;}
+      .summary-hero, .options-panel { min-width: 97vw; max-width: 97vw; padding: 18px 3vw;}
+    }
+    @media (max-width: 700px) {
+      .summary-hero, .options-panel { padding: 9px 1vw;}
+      .main-content {padding-top: 2vw;}
+      .summary-title {font-size: 1.5em;}
+    }
+  </style>
+</head>
+<body>
+  <div class="main-content">
+    <!-- Resumen Caja Empresarial -->
+    <div class="summary-hero">
+      <div class="summary-title">Resumen de Caja</div>
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="summary-icon">&#128179;</div>
+          <div class="summary-label">Boletos Vendidos</div>
+          <div class="summary-value">{{ total_vendidos or 0 }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">&#128260;</div>
+          <div class="summary-label">Devoluciones</div>
+          <div class="summary-value">{{ total_devueltos or 0 }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">&#128181;</div>
+          <div class="summary-label">Total Recaudado</div>
+          <div class="summary-value">$ {{ total_recaudado or '0.00' }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">&#128188;</div>
+          <div class="summary-label">Ganancia Vendedores</div>
+          <div class="summary-value">$ {{ total_ganancia_vendedores or '0.00' }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">&#127970;</div>
+          <div class="summary-label">Ganancia Empresa</div>
+          <div class="summary-value">$ {{ total_ganancia_empresa or '0.00' }}</div>
+        </div>
+      </div>
+    </div>
+    <!-- Panel opciones -->
+    <div class="options-panel">
+      <div class="logo-center">
+        <img src="/static/img/logo.png" alt="GL Studios">
+      </div>
+      <div class="options-title">Panel de Opciones</div>
+      <!-- Botón crear figura -->
+      <a href="{{ url_for('crear_figura') }}" class="crear-btn">
+        <span class="crear-ico">
+          <svg width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="22" height="22" rx="6" fill="#ffe135"/><path d="M15.8 8.15L13.85 6.2c-.4-.4-1.05-.4-1.45 0l-4.4 4.4c-.1.1-.15.2-.2.35l-.7 2.45c-.1.35.22.68.57.58l2.47-.7c.13-.04.25-.1.35-.2l4.4-4.4c.4-.4.4-1.05 0-1.45zm-5.33 6.28h-.02l-1.47.41.41-1.47.01-.02 3.91-3.91 1.06 1.06-3.9 3.93zm4.48-4.5l-.43.43-1.06-1.06.43-.43c.2-.2.52-.2.72 0l.34.34c.2.2.2.52 0 .72z" fill="#22263a"/></svg>
+        </span>
+        Crear Figuras
+      </a>
+      <!-- Botón asignar planillas -->
+      <a href="{{ url_for('asignar_planillas') }}" class="planilla-btn">
+        <span class="planilla-ico">
+          <!-- Ícono planilla/hoja SVG -->
+          <svg width="21" height="21" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="21" height="21" rx="6" fill="#27ae60"/><rect x="6" y="6" width="9" height="9" rx="2" fill="#fff"/><rect x="8" y="8" width="5" height="1.6" rx="0.8" fill="#27ae60"/><rect x="8" y="11" width="5" height="1.6" rx="0.8" fill="#27ae60"/></svg>
+        </span>
+        Asignación de Planillas
+      </a>
+      <a href="{{ url_for('tablero') }}" class="menu-btn">
+        <span class="menu-ico"><svg xmlns="http://www.w3.org/2000/svg" height="22" viewBox="0 0 24 24" width="22"><path fill="#ffe135" d="M19 3A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H19ZM5 5V19H19V5H5ZM7 7H17V9H7V7Z"/></svg></span>
+        Juego de Bingo
+      </a>
+      <a href="{{ url_for('panel_figuras') }}" class="menu-btn">
+        <span class="menu-ico"><svg xmlns="http://www.w3.org/2000/svg" height="22" viewBox="0 0 24 24" width="22"><circle cx="12" cy="12" r="10" fill="#ffe135"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="12" fill="#23253a" font-weight="bold">&#9733;</text></svg></span>
+        Panel de Figuras
+      </a>
+      <a href="#" class="menu-btn" onclick="alert('Módulo en construcción')">
+        <span class="menu-ico"><svg xmlns="http://www.w3.org/2000/svg" height="22" viewBox="0 0 24 24" width="22"><rect x="4" y="6" width="16" height="12" rx="2" fill="#ffe135"/></svg></span>
+        Impresión de Cartones
+      </a>
+      <a href="#" class="menu-btn" onclick="alert('Módulo en construcción')">
+        <span class="menu-ico"><svg xmlns="http://www.w3.org/2000/svg" height="22" viewBox="0 0 24 24" width="22"><rect x="5" y="5" width="14" height="14" rx="2" fill="#ffe135"/></svg></span>
+        Impresión de Planillas
+     
+

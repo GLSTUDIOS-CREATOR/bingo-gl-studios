@@ -1,0 +1,11 @@
+<boletos>
+    <boleto id="1" qr="codigoqr">
+        <numeros>
+            <fila>12,34,55,6,78</fila>
+            ...
+        </numeros>
+        <fecha>2025-05-22</fecha>
+        <vendido>no</vendido>
+    </boleto>
+    <!-- Más boletos... -->
+</boletos>

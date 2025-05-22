@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>JUEGO GL STUDIOS</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="encabezado">
+    <img src="/static/img/logo.png" alt="GL Studios" class="logo-encabezado">
+    <div class="panel-top">
+      <div class="item-top">⏱ <strong>Segundos:</strong> <span id="contadorSegundos">0</span></div>
+      <div class="item-top">🔢 <strong>Total:</strong> <span id="totalMarcadas">0</span></div>
+      <div class="item-top">🍀 <strong>Últimas:</strong> <span id="ultimos5">–</span></div>
+      <div class="item-top final">
+        🎯 <strong>Última Balota:</strong>
+        <span id="ultimaBalota" class="clic-stinger" style="cursor: pointer;">–</span>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="cerrar-sesion">Cerrar sesión</a>
+  </div>
+
+  <div class="contenedor-tablero">
+    <div>
+      <div class="botones">
+        <button id="btnIniciar" class="btn-iniciar">▶ INICIAR JUEGO</button>
+        <button id="btnFinalizar" class="btn-finalizar" disabled>⛔ FINALIZAR JUEGO</button>
+        <button id="btnReset" class="btn-reset">🔁 RESET</button>
+      </div>
+      <a href="/crear_figura">
+        <button class="btn-crear">✏️ Crear Figuras</button>
+      </a>
+      <a href="/panel_figuras">
+        <button class="btn-crear">🧩 Panel de Figuras</button>
+      </a>
+      <a href="{{ url_for('dashboard') }}">
+  <button class="btn-crear">📊 Dashboard</button>
+</a>
+
+  
+      
+
+      <div class="tablero" id="tablero"></div>
+    </div>
+  </div>
+
+ 
+
+
+
+  <script src="/static/js/script.js"></script>
+</body>
+</html>
+

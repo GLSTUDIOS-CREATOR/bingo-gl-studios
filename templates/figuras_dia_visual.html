@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Figuras - GL Studios</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { font-family: 'Poppins', Arial, sans-serif; background: linear-gradient(to bottom, #1e3c72, #2a5298); margin: 0; padding: 0; color: #222;}
+    .container-main { display: flex; gap: 32px; margin: 40px auto 0 auto; max-width: 1100px; }
+    .panel-lista { background: #fff; border-radius: 12px; box-shadow: 0 3px 12px #0001; padding: 18px; min-width: 260px; }
+    .panel-lista h3 { margin-top: 0; font-size: 1.08em; }
+    .figuras-list { list-style: none; padding: 0; margin: 0; max-height: 480px; overflow-y: auto; }
+    .figuras-list li { padding: 8px 10px; border-radius: 6px; margin-bottom: 7px; cursor: pointer; background: #f2f6fa; transition: background .18s;}
+    .figuras-list li.selected, .figuras-list li:hover { background: #1976d2; color: #fff; }
+    .vista-previa { flex: 1; background: #f8fbff; border-radius: 14px; box-shadow: 0 3px 12px #0001; padding: 24px; display: flex; flex-direction: column; align-items: flex-start; }
+    .nombre-figura { font-size: 1.28em; font-weight: bold; color: #1565c0; margin-bottom: 8px; }
+    .valor-figura { color: #616161; margin-bottom: 10px; }
+    .tabla-mini { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin-bottom: 16px; }
+    .tabla-mini div { width: 32px; height: 32px; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
+    .btn-agregar { background: #0288d1; color: #fff; border: none; border-radius: 7px; padding: 10px 24px; font-size: 1em; cursor: pointer; margin-top: 10px; }
+    .btn-agregar:hover { background: #01579b; }
+    .panel-seleccionadas { background: #e3f2fd; border-radius: 14px; margin-top: 38px; padding: 16px; }
+    .panel-seleccionadas h4 { margin-top: 0; }
+    .seleccionadas-list { display: flex; gap: 22px; flex-wrap: wrap;}
+    .seleccionada-card { background: #fff; border-radius: 10px; box-shadow: 0 3px 12px #0001; padding: 10px; min-width: 170px; }
+    .seleccionada-card .tabla-mini { margin-bottom: 5px; }
+    .btn-eliminar {
+      background: #e53935;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 7px 16px;
+      margin-top: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: bold;
+      transition: background 0.18s;
+    }
+    .btn-eliminar:hover { background: #b71c1c; }
+    .btn-dashboard {
+      display:inline-block;
+      background:#1976d2;
+      color:#fff;
+      padding:10px 22px;
+      border-radius:8px;
+      font-weight:bold;
+      text-decoration:none;
+      margin:25px 0 0 30px;
+      box-shadow:0 2px 8px #0002;
+      letter-spacing:0.5px;
+      transition:background 0.18s;
+    }
+    .btn-dashboard:hover { background: #135ba1; }
+  </style>
+</head>
+<body>
+  <div style="display: flex; align-items: center; gap: 16px; margin: 0 0 20px 40px;">
+    <img src="/static/img/logo.png" alt="logo" height="54">
+    <h2 style="color: #fff; font-weight: bold;">Panel de Figuras del Día</h2>
+  </div>
+  <a href="/tablero" class="btn-dashboard">⬅ Volver al Dashboard</a>
+
+  <div class="container-main">
+    <!-- Lista de figuras guardadas -->
+    <div class="panel-lista">
+      <h3>Figuras Guardadas</h3>
+      <ul class="figuras-list" id="figuras-list">
+        {% for figura in figuras_bingo %}
+          <li onclick="mostrarFigura({{ loop.index0 }})" id="figura-list-{{ loop.index0 }}">{{ figura.nombre }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <!-- Vista previa de figura seleccionada -->
+    <div class="vista-previa">
+      <div class="nombre-figura" id="nombre-figura">Seleccione una figura</div>
+      <div class="tabla-mini" id="tabla-mini"></div>
+      <button class="btn-agregar" id="btn-agregar" style="display:none;" onclick="agregarFiguraDia()">Agregar al Día</button>
+    </div>
+  </div>
+
+  <!-- Figuras seleccionadas para el sorteo del día -->
+  <div class="container-main panel-seleccionadas" style="flex-direction: column;">
+    <h4>Figuras Seleccionadas para Jugar Hoy</h4>
+    <div class="seleccionadas-list">
+      {% for figura in figuras_dia %}
+        <div class="seleccionada-card">
+          <div><b>{{ figura.nombre }}</b></div>
+          <div style="font-size:0.92em; color:#1976d2;">Valor: ${{ figura.valor }}</div>
+          <div class="tabla-mini">
+            {% for color in figura.colores %}
+              <div style="background: {{ color or '#fff' }};"></div>
+            {% endfor %}
+          </div>
+          <div style="font-size:0.82em;"><small>Estado: {{ figura.estado }}</small></div>
+          <button class="btn-eliminar" onclick="eliminarFiguraDelDia('{{ figura.nombre }}')">
+            ❌ Quitar Figura
+          </button>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script>
+    // Array de figuras para JS
+    const FIGURAS_BINGO = [
+      {% for figura in figuras_bingo %}
+        {
+          nombre: `{{ figura.nombre }}`,
+          colores: {{ figura.colores|tojson }}
+        },
+      {% endfor %}
+    ];
+    let figuraSeleccionada = null;
+
+    function mostrarFigura(idx) {
+      figuraSeleccionada = idx;
+      // Resalta la selección en la lista
+      document.querySelectorAll('.figuras-list li').forEach(li => li.classList.remove('selected'));
+      document.getElementById('figura-list-' + idx).classList.add('selected');
+      // Mostrar datos
+      document.getElementById('nombre-figura').textContent = FIGURAS_BINGO[idx].nombre;
+      // Dibuja mini tablero
+      let tabla = '';
+      FIGURAS_BINGO[idx].colores.forEach(color => {
+        tabla += `<div style="background: ${color || '#fff'}"></div>`;
+      });
+      document.getElementById('tabla-mini').innerHTML = tabla;
+      document.getElementById('btn-agregar').style.display = '';
+    }
+
+    function agregarFiguraDia() {
+      if (figuraSeleccionada === null) return;
+      let valor = prompt("Ingrese el valor para la figura '" + FIGURAS_BINGO[figuraSeleccionada].nombre + "':", "25");
+      if (!valor) return;
+      fetch('/guardar_figura_dia', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          nombre: FIGURAS_BINGO[figuraSeleccionada].nombre,
+          valor: valor,
+          colores: FIGURAS_BINGO[figuraSeleccionada].colores
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("¡Figura agregada al día!");
+          location.reload();
+        } else {
+          alert("Error: " + (data.error || ""));
+        }
+      });
+    }
+
+    function eliminarFiguraDelDia(nombre) {
+      if (!confirm('¿Eliminar la figura "' + nombre + '" del día?')) return;
+      fetch('/eliminar_figura_dia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombre })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Figura eliminada correctamente.");
+          location.reload();
+        } else {
+          alert("Error: " + (data.error || ""));
+        }
+      });
+    }
+  </script>
+</body>
+</html>

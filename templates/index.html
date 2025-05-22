@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard GL Studios</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body {
+      background: linear-gradient(120deg, #191f2e 60%, #253154 100%);
+      font-family: 'Poppins', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #eaf2fa;
+      min-height: 100vh;
+    }
+    .main-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: #232946;
+      padding: 42px 14px 18px 14px;
+      width: 245px;
+      min-width: 210px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 4px 0 18px #0004;
+    }
+    .sidebar img {
+      width: 70px;
+      margin-bottom: 15px;
+    }
+    .sidebar h2 {
+      color: #ffd803;
+      margin: 0 0 26px 0;
+      font-size: 1.13em;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    .menu-btn {
+      width: 92%;
+      padding: 13px 0;
+      margin: 7px 0;
+      border: none;
+      border-radius: 8px;
+      background: #21263a;
+      color: #fff;
+      font-size: 1.07em;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all .13s;
+      text-decoration: none;
+      display: block;
+      padding-left: 20px;
+    }
+    .menu-btn:hover, .menu-btn.active {
+      background: #ffd803;
+      color: #191f2e;
+      font-weight: bold;
+      outline: none;
+    }
+    .menu-btn.cerrar-sesion {
+      background: #e53935;
+      color: #fff;
+      margin-top: 42px;
+    }
+    .menu-btn.cerrar-sesion:hover {
+      background: #ad1010;
+    }
+    .main-content {
+      flex: 1;
+      padding: 54px 40px 40px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .dashboard-title {
+      font-size: 2.35em;
+      margin-bottom: 14px;
+      font-weight: bold;
+      color: #ffd803;
+      letter-spacing: 2px;
+      text-shadow: 1px 2px 16px #0009;
+    }
+    .resumen-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px 38px;
+      align-items: flex-start;
+      width: 100%;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: #232946;
+      border-radius: 19px;
+      padding: 30px 34px 28px 34px;
+      min-width: 210px;
+      min-height: 148px;
+      box-shadow: 0 4px 18px #0005;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 0;
+      justify-content: center;
+      position: relative;
+      flex: 1;
+      margin-right: 18px;
+    }
+    .kpi-title {
+      color: #b0b8d1;
+      font-size: 1.07em;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .kpi-value {
+      font-size: 2.9em;
+      color: #ffd803;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      text-shadow: 0 4px 12px #000a;
+    }
+    .kpi-subtext {
+      color: #9ea3c5;
+      font-size: 1em;
+      margin-top: 8px;
+    }
+    .kpi-icon {
+      position: absolute;
+      right: 18px;
+      top: 24px;
+      font-size: 1.8em;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    /* Gráfica Pie */
+    .charts-area {
+      display: flex;
+      gap: 38px;
+      width: 100%;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .chart-container {
+      background: #232946;
+      border-radius: 18px;
+      box-shadow: 0 4px 18px #0006;
+      padding: 18px 20px 8px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 260px;
+      margin-bottom: 14px;
+    }
+    .chart-title {
+      color: #b0b8d1;
+      margin-bottom: 8px;
+      font-size: 1.05em;
+      font-weight: 500;
+    }
+    @media (max-width: 1100px) {
+      .resumen-grid, .charts-area { flex-direction: column; }
+      .kpi-card, .chart-container { min-width: 90vw; margin-right: 0;}
+    }
+    @media (max-width: 900px) {
+      .main-container { flex-direction: column; }
+      .sidebar { flex-direction: row; width: 100%; min-width: unset; justify-content: space-around; padding: 18px 0;}
+      .main-content { padding: 18px 7px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Sidebar de botones -->
+    <div class="sidebar">
+      <img src="/static/img/logo.png" alt="GL Studios">
+      <h2>GL Studios Panel</h2>
+      <a href="/tablero" class="menu-btn">🎲 Juego Bingo</a>
+      <a href="/panel_figuras" class="menu-btn">🧩 Figuras del Día</a>
+      <a href="/crear_figura" class="menu-btn">✏️ Crear Figuras</a>
+      <a href="/impresion" class="menu-btn">🖨️ Impresión de Cartones</a>
+      <a href="/asignar_planillas" class="menu-btn">📄 Asignación de Planillas</a>
+      <a href="/vendedores" class="menu-btn">👥 Vendedores</a>
+      <a href="/dashboard_contabilidad" class="menu-btn">📊 Contabilidad</a>
+      <a href="/logout" class="menu-btn cerrar-sesion">🚪 Cerrar Sesión</a>
+    </div>
+    <!-- Contenido principal -->
+    <div class="main-content">
+      <div class="dashboard-title">Resumen de Caja</div>
+      <div class="resumen-grid">
+        <!-- KPIs -->
+        <div class="kpi-card">
+          <div class="kpi-title">Total Recaudado</div>
+          <div class="kpi-value">${{ total_recaudado }}</div>
+          <span class="kpi-icon">💵</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Boletos Vendidos</div>
+          <div class="kpi-value">{{ boletos_vendidos }}</div>
+          <span class="kpi-icon">🎟️</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Boletos Devueltos</div>
+          <div class="kpi-value">{{ boletos_devueltos }}</div>
+          <span class="kpi-icon">↩️</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Ganancia Vendedor</div>
+          <div class="kpi-value">${{ ganancia_vendedor }}</div>
+          <span class="kpi-icon">🧑‍💼</span>
+          <div class="kpi-subtext">Total ganado por vendedores</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Ganancia Empresa</div>
+          <div class="kpi-value">${{ ganancia_empresa }}</div>
+          <span class="kpi-icon">🏢</span>
+          <div class="kpi-subtext">Ingresos netos empresa</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Efectivo en Caja</div>
+          <div class="kpi-value">${{ efectivo_caja }}</div>
+          <span class="kpi-icon">💰</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Gastos del Mes</div>
+          <div class="kpi-value">${{ gastos_mes }}</div>
+          <span class="kpi-icon">🧾</span>
+        </div>
+      </div>
+      <!-- GRAFICAS -->
+      <div class="charts-area">
+        <!-- Gráfica pastel -->
+        <div class="chart-container">
+          <div class="chart-title">Distribución de Ventas</div>
+          <canvas id="chartVentas" width="160" height="160"></canvas>
+          <div style="display:flex; gap:14px; margin-top:10px;">
+            <span style="font-size:0.97em;"><span style="background:#ffd803; border-radius:4px; padding:2px 10px;"></span> Vendidos</span>
+            <span style="font-size:0.97em;"><span style="background:#4ecca3; border-radius:4px; padding:2px 10px;"></span> Devueltos</span>
+          </div>
+        </div>
+        <!-- Gráfica de barras simple -->
+        <div class="chart-container" style="min-width: 320px;">
+          <div class="chart-title">Evolución de Ventas</div>
+          <canvas id="barrasVentas" width="280" height="160"></canvas>
+        </div>
+      </div>
+      <div style="margin-top:36px;color:#a0a6c1; font-size:0.99em;">
+        <strong>Tip:</strong> Usa el menú izquierdo para navegar entre módulos.
+      </div>
+    </div>
+  </div>
+  <script>
+    // Pie chart
+    window.onload = function() {
+      const vendidos = parseInt("{{ boletos_vendidos|default(0) }}");
+      const devueltos = parseInt("{{ boletos_devueltos|default(0) }}");
+      const total = vendidos + devueltos || 1;
+      const ctx = document.getElementById('chartVentas').getContext('2d');
+      ctx.clearRect(0, 0, 160, 160);
+      // Fondo
+      ctx.beginPath();
+      ctx.arc(80, 80, 73, 0, 2 * Math.PI);
+      ctx.fillStyle = "#20253b";
+      ctx.fill();
+      // Vendidos
+      const angleVendidos = 2 * Math.PI * (vendidos/total);
+      ctx.beginPath();
+      ctx.moveTo(80,80);
+      ctx.arc(80,80,68, -0.5*Math.PI, angleVendidos-0.5*Math.PI, false);
+      ctx.closePath();
+      ctx.fillStyle = "#ffd803";
+      ctx.fill();
+      // Devueltos
+      ctx.beginPath();
+      ctx.moveTo(80,80);
+      ctx.arc(80,80,68, angleVendidos-0.5*Math.PI, 1.5*Math.PI, false);
+      ctx.closePath();
+      ctx.fillStyle = "#4ecca3";
+      ctx.fill();
+      // Texto
+      ctx.font = "bold 2.1em Poppins,Arial";
+      ctx.fillStyle = "#ffd803";
+      ctx.textAlign = "center";
+      ctx.fillText(vendidos, 80, 98);
+
+      // Bar chart simple (ejemplo, puedes poner datos reales desde Flask si quieres)
+      const ventasBar = [30, 60, 45, 80, 95, 50, 110]; // Cambia por tus datos reales (días, semanas, meses)
+      const ctxBar = document.getElementById('barrasVentas').getContext('2d');
+      ctxBar.clearRect(0, 0, 280, 160);
+      // Fondo
+      ctxBar.fillStyle = "#22263d";
+      ctxBar.fillRect(0, 0, 280, 160);
+      // Barras
+      const maxVal = Math.max(...ventasBar, 1);
+      const barWidth = 32;
+      ventasBar.forEach((val, idx) => {
+        const x = 20 + idx * 36;
+        const h = Math.round((val/maxVal)*100);
+        ctxBar.fillStyle = "#ffd803";
+        ctxBar.fillRect(x, 140-h, barWidth, h);
+        // Sombra
+        ctxBar.fillStyle = "#ffd80355";
+        ctxBar.fillRect(x, 140, barWidth, 12);
+        // Etiqueta
+        ctxBar.fillStyle = "#fff";
+        ctxBar.font = "0.9em Poppins,Arial";
+        ctxBar.fillText(val, x+barWidth/2, 130-h, 32);
+      });
+      // Eje X
+      ctxBar.strokeStyle = "#b0b8d144";
+      ctxBar.beginPath();
+      ctxBar.moveTo(10, 140);
+      ctxBar.lineTo(270, 140);
+      ctxBar.stroke();
+      // Etiquetas X
+      const labels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+      ctxBar.font = "0.92em Poppins,Arial";
+      ctxBar.fillStyle = "#b0b8d1";
+      labels.forEach((l, idx) => {
+        ctxBar.fillText(l, 20 + idx*36 + barWidth/2, 155);
+      });
+    }
+  </script>
+</body>
+</html>
+
+     
