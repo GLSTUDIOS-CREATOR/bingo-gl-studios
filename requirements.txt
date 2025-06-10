@@ -1,3 +1,7 @@
 Flask==2.2.5
 gunicorn==21.2.0
 pandas
+lxml
+qrcode
+reportlab
+PyPDF2
