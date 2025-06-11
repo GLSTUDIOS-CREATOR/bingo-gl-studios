@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>JUEGO GL STUDIOS</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    #modalGanador {
+      display: none; position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+      background: #182542cc; z-index: 1000; align-items: center; justify-content: center;
+    }
+    #modalGanador .caja-modal {
+      background: #fff; border-radius: 20px; padding: 40px 36px; min-width: 330px;
+      box-shadow: 0 10px 40px #0007; text-align: center; position: relative;
+      animation: abrir-modal .7s cubic-bezier(.43,.82,.52,1.74);
+    }
+    @keyframes abrir-modal {
+      0% { transform: scale(.7); opacity:0; }
+      100% { transform: scale(1); opacity:1; }
+    }
+    .ganador-palpitando {
+      animation: palpite 0.5s alternate infinite;
+      background: #ffd600 !important;
+      color: #003366;
+      font-weight: bold;
+      border: 2.5px solid #1976d2;
+    }
+    @keyframes palpite {
+      from { transform: scale(1.1); box-shadow: 0 0 0 #ffd600; }
+      to   { transform: scale(1.28); box-shadow: 0 0 18px #ffd60055; }
+    }
+  </style>
+</head>
+<body>
+  <div class="encabezado">
+    <img src="/static/img/logo.png" alt="GL Studios" class="logo-encabezado">
+    <div class="panel-top">
+      <div class="item-top">⏱ <strong>Segundos:</strong> <span id="contadorSegundos">0</span></div>
+      <div class="item-top">🔢 <strong>Total:</strong> <span id="totalMarcadas">0</span></div>
+      <div class="item-top">🍀 <strong>Últimas:</strong> <span id="ultimos5">–</span></div>
+      <div class="item-top final">🎯 <strong>Última Balota:</strong> <span id="ultimaBalota" class="clic-stinger" style="cursor: pointer;">–</span></div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="cerrar-sesion">Cerrar sesión</a>
+  </div>
+
+  <div style="display: flex; align-items: flex-start; padding: 20px; gap: 20px;">
+    <div style="width: 220px; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 14px #0001; min-height: 400px;">
+      <h3 style="font-size: 1.2em; margin-bottom: 20px; color:#444;">⚙️ Opciones</h3>
+      <a href="/crear_figura"><button class="btn-crear" style="display:block; width:100%; margin-bottom: 12px;">✏️ Crear Figuras</button></a>
+      <a href="/panel_figuras"><button class="btn-crear" style="display:block; width:100%; margin-bottom: 12px;">🧩 Panel de Figuras</button></a>
+      <a href="{{ url_for('dashboard') }}"><button class="btn-crear" style="display:block; width:100%;">📊 Dashboard</button></a>
+    </div>
+
+    <div class="contenedor-tablero" style="flex: 1;">
+      <div>
+        <div class="botones" style="margin-bottom: 20px;">
+          <button id="btnIniciar" class="btn-iniciar">▶ INICIAR JUEGO</button>
+          <button id="btnFinalizar" class="btn-finalizar" disabled>⛔ FINALIZAR JUEGO</button>
+          <button id="btnReset" class="btn-reset">🔁 RESET</button>
+        </div>
+        <div class="tablero" id="tablero"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalGanador">
+    <div class="caja-modal">
+      <h2 id="titulo-ganador" class="titulo-ganador">¡BOLETO GANADOR!</h2>
+      <div class="balota-ganadora-grande">
+        <span>ÚLTIMA BALOTA</span>
+        <div id="ultimaBalotaModal"></div>
+      </div>
+      <div class="contador-salidas">BALOTAS MARCADAS: <span id="contadorBalotasGanador"></span></div>
+      <div class="info-ganador-modal">
+        <div><b>Boleto:</b> <span id="ganadorBoleto"></span></div>
+        <div><b>Figura:</b> <span id="ganadorFigura"></span></div>
+        <div><b>Valor:</b> $<span id="ganadorValor"></span></div>
+        <div id="figuraVisual"></div>
+        <div><b>Números:</b> <span id="ganadorNumeros"></span></div>
+      </div>
+      <button class="btn-cerrar-modal-ganador" onclick="document.getElementById('modalGanador').style.display='none'">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="panel-historial" style="padding: 20px;">
+    <strong>Historial de números marcados:</strong>
+    <div id="listaNumeros" style="font-size:1.3em; margin-top:6px; letter-spacing:2px;">Cargando...</div>
+  </div>
+
+  <script src="/static/js/script.js"></script>
+  <script>
+    function mostrarModalGanador(boleto, figura, valor, numeros) {
+      document.getElementById("ganadorBoleto").textContent = boleto;
+      document.getElementById("ganadorFigura").textContent = figura;
+      document.getElementById("ganadorValor").textContent = valor;
+      document.getElementById("ganadorNumeros").textContent = numeros.join(", ");
+      document.getElementById("modalGanador").style.display = "flex";
+      numeros.forEach(num => {
+        let balota = document.querySelector(`.balota[data-numero='${num}']`);
+        if (balota) {
+          balota.classList.add("ganador-palpitando");
+          setTimeout(() => balota.classList.remove("ganador-palpitando"), 5000);
+        }
+      });
+    }
+    function cerrarModalGanador() {
+      document.getElementById("modalGanador").style.display = "none";
+    }
+    function armarCartonHTML(carton, marcados=[]) {
+      let html = '<div class="carton-ganador">';
+      for(let fila=0; fila<5; fila++) {
+        html += '<div class="carton-fila">';
+        for(let col=0; col<5; col++) {
+          const idx = fila*5 + col;
+          let num = carton[idx];
+          let marcado = marcados.includes(num);
+          if(fila === 2 && col === 2){
+            html += `<div class="carton-celda celda-central"><span class="estrella">${svgEstrella()}</span></div>`;
+          } else {
+            html += `<div class="carton-celda${marcado ? ' marcada' : ''}">${num}</div>`;
+          }
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+    function svgEstrella() {
+      return `<svg viewBox="0 0 50 50" class="estrella" xmlns="http://www.w3.org/2000/svg">
+        <polygon fill="#ffc84a" stroke="#bb9013" stroke-width="2"
+          points="25,4 31,19 47,19 34,29 39,44 25,35 11,44 16,29 3,19 19,19"/>
+      </svg>`;
+    }
+    document.getElementById("verGanador")?.addEventListener("click", () => {
+      mostrarModalGanador(
+        "B-100", "CRUZ DE ORO", 500,
+        [2,17,34,54,73],
+        [7,21,31,41,65,13,22,35,44,68,2,17,0,54,73,8,28,39,51,66,12,19,34,49,75],
+        [2,17,34,54,73]
+      );
+    });
+  </script>
+
+
+<!-- PANEL DE CONTROL DE BALOTERA -->
+<div class="panel-balotera" style="
+  margin: 40px auto 20px auto;
+  padding: 30px 40px;
+  width: 600px;
+  background: #111b2e;
+  border-radius: 24px;
+  text-align: center;
+  box-shadow: 0 8px 24px #00000044;
+  color: white;
+">
+  <h3 style="
+    font-size: 1.6em;
+    margin-bottom: 26px;
+    color: #4fc3f7;
+    font-weight: bold;
+  ">
+    <i class="fas fa-microchip"></i> Control de Balotera
+  </h3>
+
+  <div id="rotarBtn" onclick="activarRotacion()" style="
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 12px solid;
+    border-color: #f72585 #7209b7 #3a0ca3 #4361ee;
+    margin: 0 auto 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #fff;
+    transition: transform 1s ease;
+    cursor: pointer;
+  ">
+    Rotar
+  </div>
+
+  <div class="controles-balotera" style="
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    margin-top: 15px;
+  ">
+    <button onclick="abrirPuerta()" title="Abrir Puerta" style="
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffdd57, #fca311);
+      box-shadow: 0 4px 10px #0008;
+      border: none;
+      color: #1b1b1b;
+      font-size: 1.5em;
+      cursor: pointer;
+    ">
+      <i class="fas fa-unlock-alt"></i>
+    </button>
+    <button onclick="toggleMotor()" title="Encender Motor" style="
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #57e2ff, #117eff);
+      box-shadow: 0 4px 10px #0008;
+      border: none;
+      color: #fff;
+      font-size: 1.5em;
+      cursor: pointer;
+    ">
+      <i class="fas fa-power-off"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ÍCONOS FontAwesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<!-- FUNCIONES JS -->
+<script>
+function abrirPuerta() {
+  alert("🔓 Puerta abierta (simulado)");
+}
+function toggleMotor() {
+  alert("⚙️ Motor encendido/apagado (simulado)");
+}
+function activarRotacion() {
+  const rotar = document.getElementById("rotarBtn");
+  rotar.style.transform = "rotate(360deg)";
+  setTimeout(() => {
+    rotar.style.transform = "rotate(0deg)";
+  }, 1000);
+}
+</script>
+
+
+
+<body>
+
+
+    ...
+
+</html>

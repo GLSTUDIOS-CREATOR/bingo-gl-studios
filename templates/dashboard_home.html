@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Principal - GL Studios</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body {
+      background: linear-gradient(to bottom, #183B6B, #2472C5);
+      font-family: 'Poppins', Arial, sans-serif;
+      color: #1a237e;
+      margin: 0;
+      padding: 0;
+    }
+    .dashboard-main {
+      max-width: 750px;
+      margin: 48px auto 0;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 4px 28px #0002;
+      padding: 48px 40px;
+      text-align: center;
+    }
+    .dashboard-main img {
+      width: 140px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin-bottom: 28px;
+      color: #1565c0;
+      font-weight: 900;
+    }
+    .menu-btns {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 28px;
+      margin-top: 16px;
+    }
+    .menu-btns a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+    }
+    .dashboard-btn {
+      min-width: 180px;
+      min-height: 120px;
+      background: linear-gradient(135deg, #1976d2, #42a5f5);
+      color: #fff;
+      font-size: 1.2em;
+      font-weight: bold;
+      border: none;
+      border-radius: 18px;
+      box-shadow: 0 2px 14px #0001;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: transform 0.13s, background 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .dashboard-btn:hover {
+      background: #0d47a1;
+      transform: scale(1.04);
+    }
+    .dashboard-icon {
+      font-size: 2.3em;
+    }
+    .small-label {
+      color: #134b7b;
+      font-size: 0.95em;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-main">
+    <img src="/static/img/logo.png" alt="Logo GL Studios">
+    <h1>GL STUDIOS - SISTEMA BINGO</h1>
+    <div class="menu-btns">
+      <a href="{{ url_for('tablero') }}">
+        <button class="dashboard-btn"><span class="dashboard-icon">🎮</span> JUGAR BINGO</button>
+        <span class="small-label">Tablero de Bingo y Sorteo</span>
+      </a>
+      <a href="{{ url_for('impresion') }}">
+        <button class="dashboard-btn"><span class="dashboard-icon">🖨️</span> IMPRESIÓN</button>
+        <span class="small-label">Cartones y Planillas</span>
+      </a>
+      <a href="{{ url_for('panel_figuras') }}">
+        <button class="dashboard-btn"><span class="dashboard-icon">🧩</span> FIGURAS DEL DÍA</button>
+        <span class="small-label">Seleccionar y Crear Figuras</span>
+      </a>
+      <a href="{{ url_for('vendedores') }}">
+        <button class="dashboard-btn"><span class="dashboard-icon">👤</span> VENDEDORES</button>
+        <span class="small-label">Gestionar vendedores</span>
+      </a>
+      <a href="{{ url_for('dashboard_contabilidad') }}">
+        <button class="dashboard-btn"><span class="dashboard-icon">📊</span> CONTABILIDAD</button>
+        <span class="small-label">Resumen de ventas y reportes</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

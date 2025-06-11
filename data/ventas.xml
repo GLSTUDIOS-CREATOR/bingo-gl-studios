@@ -1,0 +1,5 @@
+<ventas>
+    <!-- Ejemplo de venta -->
+    <venta fecha="2025-06-05" vendedor="Juan" cantidad="40" total="40" />
+    <venta fecha="2025-06-05" vendedor="Pedro" cantidad="30" total="30" />
+</ventas>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Crear Figura - GL Studios</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #16222a, #3a6073);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .tablero {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .cuadro {
+      width: 60px;
+      height: 60px;
+      background-color: #ffffff;
+      border: 2px solid #ccc;
+      cursor: pointer;
+    }
+    .cuadro.activo {
+      background-color: #ff0000;
+    }
+    .formulario {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #1abc9c;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #16a085;
+    }
+    .mensaje {
+      margin-top: 15px;
+      color: #f1c40f;
+    }
+  </style>
+</head>
+<body>
+<a href="/tablero">
+  <button style="background:#e67e22; color:white; padding:10px 20px; border:none; border-radius:5px; font-weight:bold;">
+    ⬅️ Volver al Panel de Juego
+  </button>
+</a>
+
+  <h1>🧩 Crear Figura Personalizada</h1>
+  <div class="tablero" id="tablero"></div>
+
+  <div class="formulario">
+    <input type="text" id="nombreFigura" placeholder="Nombre de la figura" required>
+    <button onclick="guardarFigura()">Guardar Figura</button>
+  </div>
+
+  <div class="mensaje" id="mensaje"></div>
+
+  <script>
+    const tablero = document.getElementById('tablero');
+    const mensaje = document.getElementById('mensaje');
+
+    // Crear 5x5 cuadros
+    for (let i = 0; i < 25; i++) {
+      const div = document.createElement('div');
+      div.classList.add('cuadro');
+      div.dataset.pos = i;
+      div.addEventListener('click', () => {
+        div.classList.toggle('activo');
+      });
+      tablero.appendChild(div);
+    }
+
+    function guardarFigura() {
+      const nombre = document.getElementById('nombreFigura').value.trim();
+      if (!nombre) {
+        mensaje.textContent = 'Por favor ingresa un nombre válido.';
+        return;
+      }
+
+      const cuadros = document.querySelectorAll('.cuadro');
+      let filas = [[], [], [], [], []];
+
+      cuadros.forEach((cuadro, i) => {
+        const fila = Math.floor(i / 5);
+        const color = cuadro.classList.contains('activo') ? '#FF0000' : '#FFFFFF';
+        filas[fila].push(color);
+      });
+
+      // Enviar a Flask
+      fetch('/guardar_figura', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombre, matriz: filas })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          mensaje.textContent = '✅ Figura guardada correctamente.';
+        } else {
+          mensaje.textContent = '⚠️ Error al guardar.';
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        mensaje.textContent = '❌ Error de red.';
+      });
+    }
+  </script>
+
+</body>
+</html>

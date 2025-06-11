@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Bonificaciones</h2>
+  <form method="post" action="{{ url_for('bonificaciones.agregar_bonificacion') }}">
+    <input type="date" name="fecha" required>
+    <input type="text" name="vendedor" placeholder="Vendedor" required>
+    <input type="text" name="motivo" placeholder="Motivo" required>
+    <input type="number" name="monto" placeholder="Monto" step="0.01" required>
+    <input type="text" name="observacion" placeholder="Observación">
+    <button type="submit">Agregar Bonificación</button>
+  </form>
+  <h3>Historial</h3>
+  <table>
+    <tr><th>Fecha</th><th>Vendedor</th><th>Motivo</th><th>Monto</th><th>Obs.</th></tr>
+    {% for b in bonificaciones %}
+    <tr>
+      <td>{{ b.fecha }}</td>
+      <td>{{ b.vendedor }}</td>
+      <td>{{ b.motivo }}</td>
+      <td>${{ b.monto }}</td>
+      <td>{{ b.observacion }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

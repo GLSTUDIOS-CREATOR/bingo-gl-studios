@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Caja de Vendedores | Contabilidad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;400&display=swap" rel="stylesheet">
+  <style>
+    body { min-height: 100vh; background: radial-gradient(circle at 60% 10%, #c9e6ff 0%, #e7f0f8 80%);
+      font-family: 'Montserrat', Arial, sans-serif; margin: 0;}
+    .container { max-width: 1100px; margin: 36px auto 0 auto; background: #fff;
+      border-radius: 18px; box-shadow: 0 8px 40px #0022; padding: 0 0 24px 0; overflow: hidden;}
+    .cabecera { background: linear-gradient(90deg, #20405a 60%, #2fa4e7 100%);
+      color: #fff; padding: 22px 38px 18px 38px; font-size: 2.1em; font-weight: 900; letter-spacing: 0.01em;
+      border-radius: 0 0 36px 36px; display: flex; align-items: center; justify-content: space-between;}
+    .cabecera .fecha-box { font-size: 0.58em; font-weight: 700; letter-spacing: 0.02em; display: flex; align-items: center; gap: 0.3em;}
+    .main-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 32px; margin: 30px 34px 0 34px;}
+    .kpi { background: #f6fafd; border-radius: 17px; padding: 16px 18px 10px 20px; font-size: 1.21em; font-weight: 700; margin-bottom: 10px;}
+    .kpi .total-recaudado { font-size: 2.12em; color: #1674c7; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 5px;}
+    .kpi .extra { font-size: 1em; color: #111; font-weight: 600; margin-bottom: 2px;}
+    .kpi .subinfo { font-size: 0.95em; color: #1db837; font-weight: 700; margin-bottom: 1px;}
+    .progreso-box { background: #f6fafd; border-radius: 17px; padding: 0 0 20px 0; text-align: center;}
+    .progreso-chart { margin: 12px auto 10px auto; width: 184px; height: 184px; display: flex; align-items: center; justify-content: center;}
+    .tabla-vendedores { margin: 32px 32px 0 32px; border-radius: 16px; background: #f7fafc; box-shadow: 0 1px 4px #0021; overflow-x: auto; font-size: 1.08em;}
+    table { width: 100%; border-collapse: collapse; background: transparent;}
+    th, td { padding: 8px 13px; text-align: left;}
+    th { background: #e9f2fc; color: #1a2d4c; font-weight: 900; letter-spacing: 0.03em; font-size: 1em;}
+    tr { background: #fff; border-bottom: 1px solid #e3e9f2;}
+    tr.totales { background: #e5f5fb !important; font-weight: 900; color: #20405a; font-size: 1.06em;}
+    .estado-pagado { color: #1db837; font-weight: 700; }
+    .estado-pendiente { color: #d24242; font-weight: 700; }
+    .btn-cobrar, .btn-pagado { border: none; border-radius: 8px; font-size: 1em; padding: 6px 19px; font-weight: 900; letter-spacing: 0.01em; cursor: pointer; margin: 0 0 0 2px; box-shadow: 0 2px 7px #1673c320;}
+    .btn-cobrar { background: linear-gradient(90deg,#1994e3,#3ad3ff); color:#fff; transition: transform 0.1s;}
+    .btn-cobrar:hover { transform: scale(1.09); }
+    .btn-pagado { background: #d9e1e7; color: #789;}
+    .btn-eliminar { background: linear-gradient(90deg, #f53a33, #fe974c); border:none; border-radius:8px; padding:6px 12px; cursor:pointer; transition:transform 0.13s;}
+    .btn-eliminar:hover { transform:scale(1.13);}
+    .btn-eliminar svg { width:22px; height:22px; vertical-align:middle;}
+    /* Modal */
+    #modalCobroBg, #modalEliminarBg, #modalPlanillasBg { display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0009;z-index:90;align-items:center;justify-content:center;animation:fadein 0.1s;}
+    #modalCobro, #modalEliminar, #modalPlanillas { background:#fff;max-width:490px;border-radius:18px;padding:26px 22px 20px 22px;box-shadow:0 8px 40px #0023;position:relative;margin:auto;animation:aparecer 0.2s;}
+    #tagsBoletos { display:flex;flex-wrap:wrap;gap:7px 7px;padding:7px 0 0 0;min-height:40px;background:#f3f6fa;border-radius:8px;cursor:text;box-shadow:0 1px 1px #0001 inset;margin-bottom:4px;}
+    #tagsBoletos input { background:transparent;}
+    .tag-boleto { background:#eaf6ff;border-radius:7px;padding:2px 8px;margin:2px;font-size:0.93em;display:inline-flex;align-items:center;border:1px solid #afcce6;}
+    .tag-x { margin-left:6px;color:#c11;font-weight:700;cursor:pointer;font-size:1.1em;user-select:none;}
+    .modal-btns { margin-top:16px;text-align:right;}
+    @keyframes fadein { from{opacity:0;} to{opacity:1;} }
+    @keyframes aparecer { from{transform:translateY(-24px) scale(0.98);} to{transform:none;} }
+    .bouncein { animation:bouncein 0.2s; }
+    @keyframes bouncein { 0%{transform:scale(0.9);} 100%{transform:scale(1);} }
+    @media (max-width:900px){ .container { max-width:99vw; border-radius:0; margin:0; } .main-grid { display:block; margin:20px 2vw 0 2vw; } .tabla-vendedores { margin:25px 2vw 0 2vw; } .cabecera { border-radius:0 0 18px 18px; font-size:1.25em; padding:20px 15px 11px 14px;}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="cabecera">
+    <span>Caja de Vendedores</span>
+    <div class="fecha-box">
+      Fecha: <input type="date" id="fechaSeleccionada" style="font-size:1em;padding:2px 8px;border-radius:6px;border:1px solid #afd;" value="">
+    </div>
+  </div>
+  <div class="main-grid">
+    <div>
+      <div class="kpi">
+        <span style="color:#1db837;font-size:1.1em;">&#9632;</span>
+        <span style="font-size:1.01em;vertical-align:2px;">Total Recaudado</span>
+        <div class="total-recaudado" id="kpiTotalRecaudado">$0.00</div>
+        <div class="extra" id="kpiTotalDevolucion">Total Devolución: $0.00</div>
+        <div class="extra" id="kpiPorCobrar">Por Cobrar: $0.00</div>
+        <div class="subinfo"><span id="kpiPagados">0 pagados</span> / <span id="kpiPendientes">0 pendientes</span></div>
+        <button onclick="guardarCobros()" style="margin-top:10px;padding:7px 21px;font-weight:700;border-radius:8px;font-size:1.06em;border:none;background:#1877ee;color:#fff;box-shadow:0 2px 10px #1674c219;">Guardar Cobros del Día</button>
+      </div>
+    </div>
+    <div class="progreso-box">
+      <canvas id="graficoPagos" width="184" height="184" class="progreso-chart"></canvas>
+      <div style="font-weight:900;font-size:1.1em;color:#20405a;">Progreso Cobros</div>
+    </div>
+  </div>
+  <div class="tabla-vendedores">
+    <table>
+      <thead>
+        <tr>
+          <th>Vendedor</th>
+          <th>Planillas</th>
+          <th>Valor Total</th>
+          <th>Boletos Vendidos</th>
+          <th>Ganancia Empresa</th>
+          <th>Ganancia Vendedor</th>
+          <th>Estado</th>
+          <th>Cobrar</th>
+          <th>Eliminar</th>
+        </tr>
+      </thead>
+      <tbody id="tablaVendedores"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL COBRO -->
+<div id="modalCobroBg">
+  <div id="modalCobro">
+    <h2 style="margin:0 0 12px 0;font-weight:900;font-size:1.32em;">
+      Cobro a <span id="nombreCobro"></span>
+    </h2>
+    <label style="font-weight:600;font-size:1em;display:block;">
+      Boletos devueltos <span style="font-weight:400;font-size:0.92em;">(escanear todos rápido o pegar lista):</span>
+    </label>
+    <div id="tagsBoletos" tabindex="1"></div>
+    <label style="font-weight:600;font-size:1em;margin-top:14px;display:block;">
+      Monto entregado por el vendedor ($):
+    </label>
+    <input id="inputEntregado" type="number" min="0" step="0.01"
+           style="width:85%;font-size:1.1em;padding:4px 8px;border-radius:7px;border:1px solid #b5d;" autocomplete="off"><br>
+    <div id="resumenCobro" style="margin:15px 0 8px 0;"></div>
+    <div class="modal-btns">
+      <button onclick="cerrarModalCobro()" style="margin-right:12px;">Cancelar</button>
+      <button id="btnConfirmarCobro" onclick="confirmarCobro()"
+            style="background:#29c01b;color:#fff;font-weight:700;border:none;border-radius:6px;padding:7px 16px;">Confirmar</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL PLANILLAS -->
+<div id="modalPlanillasBg">
+  <div id="modalPlanillas">
+    <h2 style="margin:0 0 12px 0;font-weight:900;font-size:1.2em;">Planillas asignadas</h2>
+    <div id="listaPlanillas" style="font-size:1.1em;padding:10px 0;"></div>
+    <div style="text-align:right;margin-top:12px;">
+      <button onclick="cerrarModalPlanillas()" style="font-size:1.07em;">Cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL ELIMINAR -->
+<div id="modalEliminarBg">
+  <div id="modalEliminar">
+    <h2 style="margin-bottom:10px;color:#e84848">Eliminar venta</h2>
+    <div>Para eliminar la venta de este vendedor debes ingresar la clave de administrador.<br>
+      <input id="claveEliminar" type="password" placeholder="Clave" autocomplete="off"
+        style="margin:10px 0 4px 0; font-size:1.08em; padding:6px 10px; border-radius:7px; border:1px solid #aaa;" 
+        onkeydown="if(event.key==='Enter'){confirmarEliminarVenta()}">
+      <div id="mensajeClaveEliminar" style="display:none;color:#e33;font-size:0.98em;margin-bottom:4px;">Clave incorrecta</div>
+    </div>
+    <div style="margin-top:16px;text-align:right;">
+      <button onclick="cerrarModalEliminar()" style="margin-right:14px;">Cancelar</button>
+      <button style="background:#e84848;color:#fff;font-weight:700;border:none;border-radius:6px;padding:8px 19px;font-size:1.07em;" onclick="confirmarEliminarVenta()">Eliminar</button>
+    </div>
+  </div>
+</div>
+<script>
+const CLAVE_ADMIN = "LiamLara..2912";
+let vendedores = [];
+let fechaActual = new Date().toISOString().slice(0,10);
+let vendedorActualIdx = null;
+let boletosDevueltosLista = [];
+let eliminarVentaIdx = null;
+document.getElementById('fechaSeleccionada').value = fechaActual;
+
+// Cargar datos del backend (Flask)
+async function cargarPorFecha() {
+  const fecha = document.getElementById('fechaSeleccionada').value;
+  let res = await fetch(`/api/cobros_fecha?fecha=${fecha}`);
+  vendedores = await res.json();
+  renderTablaYDashboard();
+}
+document.getElementById('fechaSeleccionada').onchange = function(){
+  fechaActual = this.value;
+  cargarPorFecha();
+};
+cargarPorFecha();
+
+function renderTablaYDashboard(){
+  let tbody = "";
+  let totPlanillas=0, totVendidos=0, totEmpresa=0, totVendedor=0, totValor=0;
+  let pagados=0, pendientes=0, totDevol=0, totRecaudado=0;
+  vendedores.forEach((v,i)=>{
+    let plan = v.planillas||1;
+    let asignados = plan*40;
+    let dev = (v.boletosDevueltosLista||[]).length;
+    let vendidos = asignados-dev;
+    let gEmpresa = vendidos*0.7;
+    let gVend = vendidos*0.3;
+    let valor = asignados*1;
+    totPlanillas+=plan;
+    totVendidos+=vendidos;
+    totEmpresa+=gEmpresa;
+    totVendedor+=gVend;
+    totValor+=valor;
+    totDevol+=dev;
+    if(v.estado==="Pagado"){ pagados++; totRecaudado+=gEmpresa; }
+    else pendientes++;
+    tbody += `
+      <tr>
+        <td>${v.nombre}</td>
+        <td>${plan} <a href="#" onclick="verPlanillas(${i});return false;" style="font-size:0.98em;">Ver</a></td>
+        <td>$${valor.toFixed(2)}</td>
+        <td>${vendidos}</td>
+        <td>$${gEmpresa.toFixed(2)}</td>
+        <td>$${gVend.toFixed(2)}</td>
+        <td class="${v.estado==='Pagado'?'estado-pagado':'estado-pendiente'}">${v.estado||'Pendiente'}</td>
+        <td>
+          ${v.estado==='Pagado'
+            ? `<button class="btn-pagado" disabled>Pagado</button>`
+            : `<button class="btn-cobrar" onclick="abrirModalCobro(${i})">Cobrar</button>`}
+        </td>
+        <td>
+          <button class="btn-eliminar" onclick="abrirModalEliminar(${i})" title="Eliminar venta">
+            <svg fill="#fff" stroke="#fff" viewBox="0 0 24 24"><path d="M9 3v1H4.5a1 1 0 0 0 0 2H5v15a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h.5a1 1 0 0 0 0-2H15V3a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2Zm2-1h2a1 1 0 0 1 1 1v1h-4V3a1 1 0 0 1 1-1Zm8 4v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6h12Zm-9 3a1 1 0 0 1 2 0v8a1 1 0 1 1-2 0V9Zm4 0a1 1 0 0 1 2 0v8a1 1 0 1 1-2 0V9Z"/></svg>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  tbody += `<tr class="totales"><td>TOTALES</td>
+    <td>${totPlanillas}</td>
+    <td>$${totValor.toFixed(2)}</td>
+    <td>${totVendidos}</td>
+    <td>$${totEmpresa.toFixed(2)}</td>
+    <td>$${totVendedor.toFixed(2)}</td>
+    <td colspan="3"></td>
+    </tr>`;
+  document.getElementById("tablaVendedores").innerHTML = tbody;
+  document.getElementById("kpiTotalRecaudado").textContent = `$${totRecaudado.toFixed(2)}`;
+  document.getElementById("kpiTotalDevolucion").textContent = `Total Devolución: $${(totDevol*1).toFixed(2)}`;
+  document.getElementById("kpiPorCobrar").textContent = `Por Cobrar: $${(totEmpresa-totRecaudado).toFixed(2)}`;
+  document.getElementById("kpiPagados").textContent = `${pagados} pagados`;
+  document.getElementById("kpiPendientes").textContent = `${pendientes} pendientes`;
+  renderGraficoPagos(pagados, pendientes);
+}
+
+// -------- GRAFICO ANIMADO --------
+function renderGraficoPagos(pagados, pendientes) {
+  let ctx = document.getElementById("graficoPagos").getContext("2d");
+  ctx.clearRect(0,0,184,184);
+  let total = pagados+pendientes;
+  let angPagado = total? (pagados/total)*2*Math.PI : 0;
+  // Gris fondo
+  ctx.beginPath(); ctx.arc(92,92,71,0,2*Math.PI); ctx.strokeStyle="#bfc6ce"; ctx.lineWidth=18; ctx.stroke();
+  // Verde pagados
+  ctx.beginPath(); ctx.arc(92,92,71,-Math.PI/2, -Math.PI/2+angPagado,false); ctx.strokeStyle="#1db837"; ctx.lineWidth=18; ctx.stroke();
+}
+
+// -------- MODAL PLANILLAS --------
+function verPlanillas(idx){
+  const v = vendedores[idx];
+  fetch(`/api/planillas_vendedor?fecha=${fechaActual}&nombre=${encodeURIComponent(v.nombre)}`)
+    .then(r=>r.json()).then(planillas=>{
+      let html = planillas.length
+        ? planillas.map(p=>`<span style="display:inline-block;padding:7px 13px;margin:6px 7px;background:#f0f5ff;border-radius:9px;color:#1877ee;font-weight:700;box-shadow:0 1px 7px #98b8e510;">${p}</span>`).join('')
+        : '<span style="color:#888;font-size:1.03em;">No tiene planillas asignadas</span>';
+      document.getElementById("listaPlanillas").innerHTML = html;
+      document.getElementById("modalPlanillasBg").style.display = "flex";
+      document.getElementById("modalPlanillas").classList.add("bouncein");
+      setTimeout(()=>document.getElementById("modalPlanillas").classList.remove("bouncein"),350);
+    });
+}
+function cerrarModalPlanillas(){document.getElementById("modalPlanillasBg").style.display="none";}
+
+// -------- MODAL ELIMINAR --------
+function abrirModalEliminar(idx){
+  eliminarVentaIdx = idx;
+  document.getElementById("claveEliminar").value="";
+  document.getElementById("mensajeClaveEliminar").style.display="none";
+  document.getElementById("modalEliminarBg").style.display="flex";
+  document.getElementById("modalEliminar").classList.add("bouncein");
+  setTimeout(()=>document.getElementById("modalEliminar").classList.remove("bouncein"),350);
+  document.getElementById("claveEliminar").focus();
+}
+function cerrarModalEliminar(){document.getElementById("modalEliminarBg").style.display="none";}
+function confirmarEliminarVenta(){
+  const clave = document.getElementById("claveEliminar").value;
+  if(clave !== CLAVE_ADMIN){
+    document.getElementById("mensajeClaveEliminar").style.display="block";
+    document.getElementById("claveEliminar").focus();
+    return;
+  }
+  let idx = eliminarVentaIdx;
+  if(idx!==null && idx>=0){
+    fetch('/api/eliminar_cobro', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ fecha: fechaActual, nombre: vendedores[idx].nombre })
+    }).then(()=>{ cargarPorFecha(); });
+    cerrarModalEliminar();
+  }
+}
+
+// ----------- MODAL COBRO -----------
+function abrirModalCobro(idx) {
+  vendedorActualIdx = idx;
+  boletosDevueltosLista = (vendedores[idx].boletosDevueltosLista || []).slice();
+  renderTagsBoletos();
+  document.getElementById("nombreCobro").textContent = vendedores[idx].nombre;
+  document.getElementById("inputEntregado").value = "";
+  document.getElementById("modalCobroBg").style.display = "flex";
+  document.getElementById("modalCobro").classList.add("bouncein");
+  setTimeout(()=>document.getElementById("modalCobro").classList.remove("bouncein"),350);
+  resumenCobro();
+}
+const tagsDiv = document.getElementById("tagsBoletos");
+const inputScan = document.createElement("input");
+inputScan.type = "text";
+inputScan.id = "inputScanBoletos";
+inputScan.style="flex:1 1 80px;border:none;background:transparent;font-size:1em;outline:none;padding:0;margin:0;";
+inputScan.autocomplete="off"; inputScan.autocorrect="off"; inputScan.spellcheck=false;
+inputScan.addEventListener("paste", function(e){
+  e.preventDefault();
+  let data = e.clipboardData.getData("text");
+  let cods = data.split(/[\s,;\n\/]+/).map(x=>x.trim()).filter(x=>x.length>0);
+  agregarBoletosEscaneados(cods);
+});
+inputScan.addEventListener("keydown", function(e){
+  if (e.key === "Enter") {
+    let val = inputScan.value.trim();
+    if(val.length>0) agregarBoletosEscaneados([val]);
+    inputScan.value = "";
+    e.preventDefault();
+  }
+});
+inputScan.addEventListener("input", function(){
+  if (inputScan.value.length > 20) { agregarBoletosEscaneados([inputScan.value.trim()]); inputScan.value = ""; }
+});
+function agregarBoletosEscaneados(lista) {
+  let prevLen = boletosDevueltosLista.length;
+  lista.forEach(cod=>{ if(cod.length>2 && !boletosDevueltosLista.includes(cod)) boletosDevueltosLista.push(cod); });
+  renderTagsBoletos();
+  if(boletosDevueltosLista.length !== prevLen) resumenCobro();
+}
+function renderTagsBoletos() {
+  tagsDiv.innerHTML = '';
+  boletosDevueltosLista.forEach((cod,idx)=>{
+    let tag = document.createElement("span");
+    tag.className = "tag-boleto";
+    tag.textContent = cod;
+    let btn = document.createElement("span");
+    btn.textContent = "×";
+    btn.className = "tag-x";
+    btn.onclick = function(){ boletosDevueltosLista.splice(idx,1); renderTagsBoletos(); resumenCobro(); };
+    tag.appendChild(btn);
+    tagsDiv.appendChild(tag);
+  });
+  tagsDiv.appendChild(inputScan); inputScan.value = '';
+}
+document.getElementById("inputEntregado").oninput = resumenCobro;
+function resumenCobro() {
+  let v = vendedores[vendedorActualIdx];
+  let planillas = v.planillas ? parseInt(v.planillas) : 1;
+  let asignados = planillas * 40;
+  let devueltos = boletosDevueltosLista.length;
+  let vendidos = asignados - devueltos;
+  let total = vendidos * 0.7;
+  let gvend = vendidos * 0.3;
+  let gemp = vendidos * 0.7;
+  let entregado = parseFloat(document.getElementById("inputEntregado").value) || 0;
+  let vuelto = (entregado - total).toFixed(2);
+  let resumen = `
+      <b>Planillas asignadas:</b> ${planillas}<br>
+      <b>Boletos asignados:</b> ${asignados}<br>
+      <b>Boletos devueltos:</b> ${devueltos}<br>
+      <b>Boletos vendidos:</b> ${vendidos}<br>
+      <b>Total a pagar:</b> <span style="color:#29c01b;">$${total.toFixed(2)}</span><br>
+      <b>Ganancia vendedor:</b> <span style="color:#2ba2c8;">$${gvend.toFixed(2)}</span><br>
+      <b>Ganancia empresa:</b> <span style="color:#28a2ba;">$${gemp.toFixed(2)}</span><br>
+      <b>Entregado:</b> $${entregado.toFixed(2)} 
+      <b>Vuelto:</b> <span style="color:${vuelto < 0 ? '#c22' : '#29c01b'};">$${vuelto}</span><br>
+  `;
+  document.getElementById("resumenCobro").innerHTML = resumen;
+  document.getElementById("btnConfirmarCobro").disabled = (vuelto < 0);
+}
+function cerrarModalCobro() {
+  document.getElementById("modalCobroBg").style.display = "none";
+}
+function confirmarCobro() {
+  let v = vendedores[vendedorActualIdx];
+  v.boletosDevueltosLista = [...boletosDevueltosLista];
+  v.estado = "Pagado";
+  // Guardar cobro en el backend
+  fetch('/api/guardar_cobro', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      fecha: fechaActual,
+      nombre: v.nombre,
+      boletosDevueltosLista: v.boletosDevueltosLista
+    })
+  }).then(()=>{ cargarPorFecha(); });
+  cerrarModalCobro();
+}
+// ----------- GUARDAR COBROS DEL DÍA -----------
+function guardarCobros(){
+  // (opcional: puedes implementar aquí el guardado masivo si lo necesitas)
+  alert("¡Aquí puedes enviar los datos a tu endpoint para guardar el XML diario de cobros!\n(Implementa el fetch POST en tu backend).");
+}
+</script>
+</body>
+</html>
+
+
+
+

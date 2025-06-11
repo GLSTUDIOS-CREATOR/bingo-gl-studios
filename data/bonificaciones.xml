@@ -1,0 +1,16 @@
+<bonificaciones>
+    <bonificacion 
+        fecha="2025-06-05" 
+        vendedor="Juan"
+        motivo="Meta de ventas alcanzada"
+        monto="20"
+        observacion="Por superar las 500 ventas en el mes"
+    />
+    <bonificacion 
+        fecha="2025-06-02" 
+        vendedor="Ana"
+        motivo="Mejor vendedor de la semana"
+        monto="15"
+        observacion="Mayor cantidad de boletos vendidos en la semana"
+    />
+</bonificaciones>

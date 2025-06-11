@@ -1,0 +1,10 @@
+<usuarios>
+  <usuario>
+    <nombre>GLSTUDIOS</nombre>
+    <clave>123456</clave>
+  </usuario>
+  <usuario>
+    <nombre>admin</nombre>
+    <clave>adminpass</clave>
+  </usuario>
+</usuarios>

@@ -1,0 +1,4 @@
+<empleados>
+    <empleado nombre="Carlos" sueldo="400" pagos="2025-06-01,2025-05-01" />
+    <empleado nombre="Ana" sueldo="500" pagos="2025-06-01" />
+</empleados>

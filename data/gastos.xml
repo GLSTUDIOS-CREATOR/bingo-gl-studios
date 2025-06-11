@@ -1,0 +1,4 @@
+<gastos>
+    <gasto fecha="2025-06-05" concepto="Alquiler" monto="150" factura="alquiler_junio.pdf" />
+    <gasto fecha="2025-06-05" concepto="Impresora" monto="60" factura="impresora.jpg" />
+</gastos>

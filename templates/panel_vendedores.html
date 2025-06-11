@@ -1,0 +1,214 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="vendedores-dashboard">
+  <h2 class="vd-title">Gestión de Vendedores</h2>
+  
+  <div class="vd-grid">
+    <!-- Formulario -->
+    <form id="form-vendedor" class="vd-card vd-form" onsubmit="guardarVendedor(event)">
+      <input type="hidden" id="vendedor-id">
+      <div class="vd-input-group">
+        <input type="text" id="nombre" class="vd-input" placeholder="Nombre completo" required autocomplete="off">
+        <input type="text" id="alias" class="vd-input" placeholder="Alias o seudónimo" required autocomplete="off">
+      </div>
+      <div class="vd-btn-group">
+        <button type="submit" class="vd-btn vd-btn-blue">Guardar</button>
+        <button type="button" class="vd-btn vd-btn-grey" onclick="resetForm()">Cancelar</button>
+      </div>
+    </form>
+
+    <!-- Tabla Vendedores -->
+    <div class="vd-card">
+      <table class="vd-table">
+        <thead>
+          <tr>
+            <th style="min-width:42px;">ID</th>
+            <th>Nombre</th>
+            <th>Alias</th>
+            <th style="min-width:100px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="vendedores-lista">
+          {% for v in vendedores %}
+          <tr data-id="{{v.id}}">
+            <td class="vd-id">{{v.id}}</td>
+            <td class="vd-nombre">{{v.nombre}}</td>
+            <td class="vd-alias">{{v.alias}}</td>
+            <td>
+              <button class="vd-btn vd-btn-yellow" onclick="editarVendedor({{v.id}})" type="button" title="Editar"><span class="material-icons">edit</span></button>
+              <button class="vd-btn vd-btn-red" onclick="eliminarVendedor({{v.id}})" type="button" title="Eliminar"><span class="material-icons">delete</span></button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;400&family=Material+Icons" rel="stylesheet">
+<style>
+.vendedores-dashboard {
+  max-width: 1000px;
+  margin: 44px auto 0 auto;
+  padding: 0 10px;
+}
+.vd-title {
+  color: #ffd803;
+  font-size: 2.6em;
+  font-weight: 900;
+  margin-bottom: 36px;
+  letter-spacing: 1.2px;
+  text-shadow: 0 4px 18px #0004;
+}
+.vd-grid {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.vd-card {
+  background: rgba(35, 41, 70, 0.77);
+  border-radius: 20px;
+  box-shadow: 0 8px 40px #191f2e44, 0 1.5px 4px #23294611;
+  padding: 34px 30px 24px 30px;
+  min-width: 340px;
+  color: #fff;
+  backdrop-filter: blur(11px) saturate(160%);
+  transition: box-shadow .23s;
+}
+.vd-card:hover {
+  box-shadow: 0 12px 60px #191f2e55, 0 2.5px 10px #23294618;
+}
+.vd-form {
+  min-width: 260px; max-width: 270px; box-shadow: 0 8px 36px #0078e799;
+  display: flex; flex-direction: column; align-items: stretch;
+}
+.vd-input-group {
+  display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;
+}
+.vd-input {
+  background: #23294699;
+  border: 2px solid #ffd803;
+  border-radius: 11px;
+  padding: 12px 18px;
+  font-size: 1.04em;
+  font-family: inherit;
+  color: #fff;
+  transition: border .18s, background .22s;
+  margin-bottom: 0;
+  outline: none;
+  font-weight: 500;
+}
+.vd-input:focus {
+  border: 2px solid #41bfff;
+  background: #232946ee;
+  color: #ffd803;
+}
+.vd-btn-group {
+  display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;
+}
+.vd-btn {
+  padding: 7px 22px;
+  border-radius: 10px;
+  border: none;
+  margin: 0 2px;
+  font-weight: 700;
+  font-family: inherit;
+  font-size: 1.01em;
+  box-shadow: 0 2px 10px #0078e733;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: 0.5px;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+}
+.vd-btn-blue { background: linear-gradient(92deg,#1576ff,#41bfff 80%); color: #fff; }
+.vd-btn-grey { background: #909aa2; color: #fff; }
+.vd-btn-yellow { background: #ffd803; color: #21263a; font-weight: bold;}
+.vd-btn-red { background: #e44c4c; color: #fff; }
+.vd-btn:hover { opacity: .84; transform: translateY(-2px) scale(1.04);}
+.material-icons { font-size: 1.26em; vertical-align: middle; }
+.vd-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 7px;
+  background: transparent;
+  color: #fff;
+  font-size: 1.07em;
+  font-family: inherit;
+}
+.vd-table th {
+  padding: 7px 14px;
+  background: none;
+  color: #ffd803;
+  font-size: 1.03em;
+  text-align: left;
+  border: none;
+  letter-spacing: 0.5px;
+}
+.vd-table td {
+  background: rgba(40, 51, 87, 0.85);
+  border-radius: 9px;
+  padding: 9px 14px;
+  border: none;
+  color: #fff;
+  font-size: 1.01em;
+  font-family: inherit;
+}
+.vd-table tr[data-id]:hover td {
+  background: #191f2e;
+  color: #ffd803;
+  transition: background .19s, color .19s;
+}
+@media (max-width: 950px) {
+  .vd-grid { flex-direction: column; gap: 26px;}
+}
+</style>
+
+<script>
+function guardarVendedor(event) {
+  event.preventDefault();
+  const id = document.getElementById("vendedor-id").value;
+  const nombre = document.getElementById("nombre").value;
+  const alias = document.getElementById("alias").value;
+  const data = {nombre, alias};
+  let url = "/api/vendedores";
+  let method = "POST";
+  if(id) {
+    url += "/" + id;
+    method = "PUT";
+  }
+  fetch(url, {
+    method: method,
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(r=>r.json()).then(res=>{
+    if(res.success) location.reload();
+    else alert(res.error || "Error");
+  });
+}
+function editarVendedor(id) {
+  const row = document.querySelector(`tr[data-id='${id}']`);
+  document.getElementById("vendedor-id").value = id;
+  document.getElementById("nombre").value = row.querySelector('.vd-nombre').textContent;
+  document.getElementById("alias").value = row.querySelector('.vd-alias').textContent;
+  document.getElementById("nombre").focus();
+}
+function eliminarVendedor(id) {
+  if(confirm("¿Eliminar vendedor?")) {
+    fetch("/api/vendedores/" + id, {method: "DELETE"})
+      .then(r=>r.json()).then(res=>{
+        if(res.success) location.reload();
+        else alert("Error al eliminar");
+      });
+  }
+}
+function resetForm() {
+  document.getElementById("vendedor-id").value = "";
+  document.getElementById("nombre").value = "";
+  document.getElementById("alias").value = "";
+}
+</script>
+{% endblock %}

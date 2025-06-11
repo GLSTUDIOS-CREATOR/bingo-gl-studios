@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Clave requerida</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .clave-wrapper { max-width: 340px; margin: 120px auto; padding: 32px 28px; background: #232946; color: #fff; border-radius: 12px; box-shadow: 0 6px 24px #0003; text-align: center; }
+    .clave-wrapper input { width: 90%; margin: 14px 0; padding: 9px 12px; font-size: 1.1em; border: none; border-radius: 7px; }
+    .clave-wrapper button { padding: 10px 34px; font-size: 1.1em; border-radius: 8px; background: #6b47dc; color: #fff; border: none; }
+    .clave-wrapper button:hover { background: #46317b; }
+    .clave-wrapper .error { color: #ffc107; font-size: 0.96em; margin-bottom: 10px;}
+  </style>
+</head>
+<body>
+  <div class="clave-wrapper">
+    <h2>🔐 Clave de Seguridad</h2>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="POST">
+      <input type="password" name="clave" placeholder="Clave de acceso" required>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+</body>
+</html>
+

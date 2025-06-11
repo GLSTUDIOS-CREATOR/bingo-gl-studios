@@ -1,0 +1,16 @@
+<h2>¡Cartón Ganador!</h2>
+<p>Número: {{ carton['numero'] }}</p>
+<table>
+  {% for i in range(5) %}
+    <tr>
+      {% for j in range(5) %}
+        {% set idx = i*5 + j %}
+        {% if idx == 12 %}
+          <td style="background: #ccc;">FREE</td>
+        {% else %}
+          <td>{{ carton['numeros'][idx] }}</td>
+        {% endif %}
+      {% endfor %}
+    </tr>
+  {% endfor %}
+</table>

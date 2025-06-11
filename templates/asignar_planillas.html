@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Asignación de Planillas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at 60% 10%, #1a2740 0%, #2a3752 100%);
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin: 0;
+      color: #fff;
+    }
+    .container {
+      max-width: 460px;
+      margin: 48px auto 0 auto;
+      background: #222a36;
+      border-radius: 24px;
+      box-shadow: 0 8px 48px #0022, 0 2px 8px #0007 inset;
+      padding: 34px 32px 26px 32px;
+    }
+    h1 {
+      font-size: 2.15em;
+      font-weight: 900;
+      margin-bottom: 16px;
+      letter-spacing: 0.01em;
+      color: #fff;
+      text-align: center;
+    }
+    label, .etiqueta {
+      display: block;
+      font-weight: 700;
+      margin-top: 12px;
+      font-size: 1.09em;
+      color: #aee8ff;
+    }
+    input, select {
+      font-size: 1em;
+      font-family: inherit;
+      padding: 7px 10px;
+      border-radius: 7px;
+      border: 1px solid #285073;
+      margin-top: 4px;
+      width: 100%;
+      background: #232b39;
+      color: #fff;
+      outline: none;
+      margin-bottom: 10px;
+      transition: border 0.2s;
+    }
+    input:focus, select:focus {
+      border: 1.7px solid #35b4ff;
+      background: #202635;
+    }
+    .bloque-vendedor {
+      margin: 0 0 15px 0;
+      padding: 12px 13px 8px 13px;
+      background: #242c3d;
+      border-radius: 12px;
+      font-size: 1.08em;
+    }
+    .global-stats {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    #graficaTotales {
+      display: block;
+      margin: 0 auto 6px auto;
+      background: #232b39;
+      border-radius: 50%;
+      box-shadow: 0 2px 18px #0b1b2d50;
+      animation: aparecer 0.5s;
+    }
+    .global-stats span {
+      font-weight: 900;
+      color: #59c2ff;
+      font-size: 1.2em;
+    }
+    .global-stats .boletos {
+      color: #b7e1ff;
+      font-size: 1em;
+      font-weight: 700;
+    }
+    .btn {
+      width: 100%;
+      background: linear-gradient(90deg, #23b0ff 60%, #159eea 100%);
+      border: none;
+      color: #fff;
+      font-weight: 900;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 14px;
+      font-size: 1.09em;
+      cursor: pointer;
+      box-shadow: 0 2px 9px #28baff44;
+      transition: background 0.16s, transform 0.12s;
+    }
+    .btn:hover { background: linear-gradient(90deg, #3de3fe 0%, #2290e2 100%); transform: scale(1.03);}
+    @keyframes donut {
+      from { stroke-dasharray: 0 999; }
+    }
+    @keyframes aparecer { from{opacity:0;transform:scale(0.93);} }
+    @media (max-width: 700px) {
+      .container { max-width: 99vw; border-radius: 0; margin: 0; padding: 18px 2vw 12px 2vw; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Asignación de Planillas</h1>
+    
+    <!-- Gráfica de Totales -->
+    <div class="global-stats">
+      <canvas id="graficaTotales" width="200" height="200"></canvas>
+      <div>
+        <span id="totPlanillas">0</span> Planillas<br>
+        <span id="totBoletos" class="boletos">0 Boletos</span>
+      </div>
+    </div>
+    
+    <label for="fechaSel">Fecha:</label>
+    <input type="date" id="fechaSel">
+
+    <label for="vendedorSel">Selecciona un vendedor:</label>
+    <select id="vendedorSel"></select>
+    
+    <div class="bloque-vendedor" id="bloqueVendedor">
+      Selecciona un vendedor para ver detalles.
+    </div>
+    
+    <form id="formPlanilla" autocomplete="off">
+      <div class="etiqueta" id="nombreVendedor"></div>
+      <label for="codigoPlanilla">Escanea o ingresa código de planilla</label>
+      <input id="codigoPlanilla" placeholder="Ej: SORTEO20240603X001V">
+      <button class="btn" type="submit">Agregar Planilla</button>
+      <div id="planillasAsignadas" style="margin-top:7px; color:#aee8ff;"></div>
+    </form>
+  </div>
+  
+  <script>
+    // ==== SIMULACIÓN DE BASE DE DATOS ====
+    // Cambia esto por tu API real o tu integración
+    let dataAsignacion = {
+      "2024-06-04": {
+        "Giovanny Lara (Mr. Gio)": { planillas: ["PLN-01","PLN-02"], boletos: 80 },
+        "Ricardo Rojas": { planillas: ["PLN-03"], boletos: 40 }
+      },
+      "2024-06-03": {
+        "Giovanny Lara (Mr. Gio)": { planillas: ["PLN-10"], boletos: 40 }
+      }
+    };
+    let vendedores = ["Giovanny Lara (Mr. Gio)", "Ricardo Rojas"];
+    // ============
+
+    // --- Elementos ---
+    const vendedorSel = document.getElementById('vendedorSel');
+    const fechaSel = document.getElementById('fechaSel');
+    const bloqueVend = document.getElementById('bloqueVendedor');
+    const nombreVend = document.getElementById('nombreVendedor');
+    const formPlanilla = document.getElementById('formPlanilla');
+    const inputPlanilla = document.getElementById('codigoPlanilla');
+    const planillasAsignadas = document.getElementById('planillasAsignadas');
+    const totPlanillas = document.getElementById('totPlanillas');
+    const totBoletos = document.getElementById('totBoletos');
+    const grafica = document.getElementById('graficaTotales');
+    const ctx = grafica.getContext('2d');
+
+    // --- Inicializar fecha actual ---
+    let hoy = new Date().toISOString().slice(0,10);
+    fechaSel.value = hoy;
+
+    // --- Inicializar select vendedores ---
+    vendedores.forEach(v=> {
+      let op = document.createElement('option');
+      op.value = v; op.textContent = v;
+      vendedorSel.appendChild(op);
+    });
+
+    // --- Renderizar gráfico animado donut ---
+    function donutAnimado(valor, max, color) {
+      let ang = 2*Math.PI*(valor/max);
+      ctx.clearRect(0,0,200,200);
+      // Fondo gris
+      ctx.beginPath();
+      ctx.arc(100,100,76,0,2*Math.PI);
+      ctx.strokeStyle = "#2c3d54";
+      ctx.lineWidth = 23;
+      ctx.stroke();
+      // Progreso
+      ctx.beginPath();
+      ctx.arc(100,100,76,-Math.PI/2,-Math.PI/2+ang);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 23;
+      ctx.lineCap = "round";
+      ctx.stroke();
+      // Círculo interior
+      ctx.beginPath();
+      ctx.arc(100,100,57,0,2*Math.PI);
+      ctx.fillStyle = "#232b39";
+      ctx.fill();
+    }
+    function renderGrafico(totPlan, totBole) {
+      let maxPlan = 20; // ajusta máximo visible
+      donutAnimado(totPlan, maxPlan, "#23b4ff");
+      // Texto central
+      ctx.font = '900 2.3em Montserrat';
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(totPlan,100,100);
+      ctx.font = '600 1.04em Montserrat';
+      ctx.fillStyle = "#9fdcff";
+      ctx.fillText('Planillas',100,130);
+    }
+
+    // --- Renderizar totales globales ---
+    function renderTotales() {
+      let fecha = fechaSel.value;
+      let datos = dataAsignacion[fecha] || {};
+      let totP = 0, totB = 0;
+      for(let v in datos) {
+        totP += (datos[v].planillas||[]).length;
+        totB += datos[v].boletos||0;
+      }
+      totPlanillas.textContent = totP;
+      totBoletos.textContent = totB+" Boletos";
+      renderGrafico(totP, totB);
+    }
+
+    // --- Renderizar bloque de vendedor seleccionado ---
+    function renderVendedor() {
+      let fecha = fechaSel.value;
+      let vend = vendedorSel.value;
+      let datos = dataAsignacion[fecha] || {};
+      let info = datos[vend] || { planillas:[], boletos:0 };
+      bloqueVend.innerHTML = `<b>${vend}</b> <span style="color:#43c1ff">Planillas:</span> <b>${info.planillas.length}</b> | <span style="color:#43c1ff">Boletos:</span> <b>${info.boletos}</b>`;
+      nombreVend.textContent = vend || "";
+      planillasAsignadas.innerHTML = info.planillas.length ? "Asignadas: "+info.planillas.map(p=>`<span style="background:#142a47;color:#8df; padding:3px 8px; border-radius:8px;margin:3px;display:inline-block;">${p}</span>`).join(" ") : "Sin planillas asignadas.";
+    }
+
+    // --- Evento al agregar planilla ---
+    formPlanilla.onsubmit = function(e) {
+      e.preventDefault();
+      let fecha = fechaSel.value;
+      let vend = vendedorSel.value;
+      let codigo = inputPlanilla.value.trim();
+      if(!codigo) return;
+      // Valida que no esté repetida
+      if(!dataAsignacion[fecha]) dataAsignacion[fecha]={};
+      if(!dataAsignacion[fecha][vend]) dataAsignacion[fecha][vend]={planillas:[],boletos:0};
+      if(dataAsignacion[fecha][vend].planillas.includes(codigo)) {
+        alert("¡Esta planilla ya está asignada a este vendedor!");
+        return;
+      }
+      dataAsignacion[fecha][vend].planillas.push(codigo);
+      dataAsignacion[fecha][vend].boletos = dataAsignacion[fecha][vend].planillas.length * 40;
+      inputPlanilla.value = "";
+      renderVendedor();
+      renderTotales();
+    }
+
+    // --- Cambios de fecha o vendedor ---
+    fechaSel.onchange = ()=>{renderTotales();renderVendedor();}
+    vendedorSel.onchange = ()=>{renderVendedor();}
+    // Inicializar
+    renderTotales();
+    renderVendedor();
+  </script>
+</body>
+</html>
+
