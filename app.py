@@ -1,7 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_from_directory, send_file
-from flask import send_from_directory
 import os
-import glob
 import pandas as pd
 from datetime import date, datetime
 import random
@@ -16,7 +14,6 @@ from PyPDF2 import PdfMerger
 import xml.etree.ElementTree as ET
 import re
 import json
-from datetime import date
 
 # Blueprints de usuarios
 from usuarios import bp_usuarios   # Asegúrate que tu archivo usuarios.py tenga 'bp_usuarios' definido correctamente
@@ -31,7 +28,6 @@ import pandas as pd
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 ARCHIVO_NUMEROS_MARCADOS = os.path.join(DATA_DIR, "numeros_marcados.txt")
-ASIGNACIONES_DIR = os.path.join(BASE_DIR, "asignaciones")
 
 ARCHIVOS_CARTONES = [
     os.path.join(DATA_DIR, "Srs_ib1.csv"),
@@ -594,99 +590,85 @@ def marcar_balota():
 
 
 
-def leer_figura_pattern_color(ruta_figura_xml):
-    """
-    Lee la figura activa (formato XML de tu sistema) y devuelve una lista de posiciones (índices 0 a 24)
-    donde el color sea '#FF0000' (activo). ¡Así no te dará errores de índice!
-    """
+def verificar_ganador_figura():
     import xml.etree.ElementTree as ET
-    tree = ET.parse(ruta_figura_xml)
+
+    XML_BALOTAS = os.path.join(DATA_DIR, "datos_bingo.xml")
+    RUTA_FIGURAS_DIA = os.path.join(DATA_DIR, "figuras_del_dia.xml")
+    ARCHIVOS_CARTONES = [
+        os.path.join(DATA_DIR, "Srs_ib1.csv"),
+        os.path.join(DATA_DIR, "Srs_ib2.csv"),
+        os.path.join(DATA_DIR, "Srs_ib3.csv"),
+        os.path.join(DATA_DIR, "Srs_Manilla.csv"),
+    ]
+
+    # 1. Lee números marcados
+    tree = ET.parse(XML_BALOTAS)
     root = tree.getroot()
-    figura = root.find('figura')
-    if figura is None:
-        return []
-    cuadro = figura.find('cuadro')
-    if cuadro is None or not cuadro.text:
-        return []
-    colores = [c.strip().upper() for c in cuadro.text.split(",")]
-    # Devuelve índices de las casillas activas en la figura (por color rojo)
-    return [i for i, color in enumerate(colores) if color == "#FF0000"]
+    balotas = root.find('balotas')
+    numeros_marcados = set(
+        int(b.get('estado')) for b in balotas.findall('balota')
+        if b.get('estado') and b.get('estado').isdigit()
+    )
 
-def cargar_cartones_csv(ruta_csv):
-    """
-    Lee el CSV real de cartones y devuelve lista de diccionarios con todos los números en orden BINGO (25).
-    """
-    df = pd.read_csv(ruta_csv, dtype=str)
-    df.columns = [col.lower().strip() for col in df.columns]
-    cartones = []
-    for idx, row in df.iterrows():
-        numeros = []
-        for pref in ['b', 'i', 'n', 'g', 'o']:
-            for i in range(1, 6):
-                key = f'{pref}{i}'
-                val = row.get(key)
-                if pd.isna(val) or val == '' or val is None:
-                    numeros.append(None)
-                else:
-                    numeros.append(int(val))
-        carton = {
-            'numero': row.get('numero', idx+1),
-            'numeros': numeros
-        }
-        cartones.append(carton)
-    return cartones
+    # 2. Lee figuras del día
+    tree_fig = ET.parse(RUTA_FIGURAS_DIA)
+    root_fig = tree_fig.getroot()
+    figuras = []
+    for f in root_fig.findall("figura"):
+        nombre = f.attrib.get("nombre")
+        valor = int(f.attrib.get("valor", 0))
+        colores = f.find("cuadro").text.split(",")
+        posiciones = [i for i, c in enumerate(colores) if c.strip().upper() == "#FF0000"]
+        figuras.append({
+            "nombre": nombre,
+            "valor": valor,
+            "posiciones": posiciones,
+            "colores": colores
+        })
 
-def es_carton_ganador_color(carton, balotas_marcadas, posiciones_figura):
-    """
-    Devuelve True si el cartón es ganador para la figura (por posiciones activas y números marcados).
-    Anula la casilla central N3 (índice 12).
-    """
-    for idx in posiciones_figura:
-        if idx == 12:  # Ignora centro
+    # 3. Recorre cada cartón
+    for archivo in ARCHIVOS_CARTONES:
+        if not os.path.exists(archivo):
             continue
-        num = carton['numeros'][idx]
-        if num is None or int(num) not in balotas_marcadas:
-            return False
-    return True
+        df = pd.read_csv(archivo)
+        df.columns = [col.strip().lower() for col in df.columns]
+        for idx, boleto in df.iterrows():
+            carton = []
+            try:
+                carton += [int(boleto[f'b{i}']) for i in range(1, 6)]
+                carton += [int(boleto[f'i{i}']) for i in range(1, 6)]
+                carton += [int(boleto[f'n{i}']) for i in range(1, 6)]
+                carton += [int(boleto[f'g{i}']) for i in range(1, 6)]
+                carton += [int(boleto[f'o{i}']) for i in range(1, 6)]
+            except Exception as e:
+                continue
 
-def buscar_ganador_csv_color(ruta_csv, ruta_figura_xml, balotas_marcadas):
-    posiciones_figura = leer_figura_pattern_color(ruta_figura_xml)
-    cartones = cargar_cartones_csv(ruta_csv)
-    for carton in cartones:
-        if es_carton_ganador_color(carton, balotas_marcadas, posiciones_figura):
-            return carton
-    return None
-
-# ENDPOINT para mostrar el ganador en tu panel
-@app.route('/verificar_ganador')
-def verificar_ganador():
-    with open('data/numeros_marcados.txt') as f:
-        balotas = [int(x) for x in f.read().strip().split(',') if x.strip().isdigit()]
-    ruta_csv = 'data/Srs_ib1.csv'  # o el archivo que esté activo (ajusta si el usuario elige otro)
-    ruta_figura = 'data/figuras_del_dia.xml'
-    ganador = buscar_ganador_csv_color(ruta_csv, ruta_figura, balotas)
-    if ganador:
-        return render_template('mostrar_ganador.html', carton=ganador)
-    else:
-        return "No hay ganador aún."
-
-
-
-
-
-
-
+            for figura in figuras:
+                if not figura["posiciones"]:
+                    continue
+                numeros_figura = [carton[i] for i in figura["posiciones"] if carton[i] != 0]
+                if all(num in numeros_marcados for num in numeros_figura):
+                    return {
+                        "success": True,
+                        "ganador": {
+                            "boleto": str(boleto['numero']),
+                            "figura": figura["nombre"],
+                            "valor": figura["valor"],
+                            "casillas_boleto": carton,
+                            "posiciones_figura": figura["posiciones"],
+                            "numeros": numeros_figura,
+                        }
+                    }
+    return {"success": True, "ganador": None}
 
 
 
 
-
-
-
-
-
-
-
+@app.route('/verificar_ganador_figura', methods=['POST'])
+def api_verificar_ganador_figura():
+    resultado = verificar_ganador_figura()
+    return jsonify(resultado)
 
 
 
@@ -911,10 +893,7 @@ def impresion():
 
 
 
-def generar_pdf_boletos_excel(
-    ids, boletos, valor, telefono, nombre,
-    reintegro_especial, cant_especial, reintegros, incluir_aleatorio, fecha_sorteo
-):
+def generar_pdf_boletos_excel(ids, boletos, valor, telefono, nombre, reintegro_especial, cant_especial, reintegros, incluir_aleatorio, fecha_sorteo):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     ancho, alto = A4
@@ -922,7 +901,7 @@ def generar_pdf_boletos_excel(
     alto_boleto = (alto - 2 * MARGEN_SUP - ESPACIO_Y * (FILAS - 1)) / FILAS
     size_celda = min(ancho_boleto, alto_boleto) / 5.2
 
-    # -- Calcular reintegros
+    # -- Calcular en qué boletos irá el reintegro especial y en cuáles aleatorios
     N = len(boletos)
     indices_especial = random.sample(range(N), min(N, cant_especial)) if (reintegro_especial and reintegro_especial != '') else []
     indices_aleatorio = []
@@ -951,33 +930,28 @@ def generar_pdf_boletos_excel(
                     c.setFont('Helvetica-Bold', SIZE_NUM)
                     valor_celda = str(row.get(f"{letra}{f+1}", "-"))
                     if letra == 'n' and f == 2:
-                        # === QR GRANDE Y FORMATO LIMPIO ===
-                        serie_letra = SERIE_MAP.get(nombre, nombre)[0]  # Solo la letra/serie (V, +, &, M...)
+                        serie_letra = SERIE_MAP.get(nombre, nombre)
                         qr_data = (
-                            f"SORTEO{fecha_sorteo.replace('-','')}B{ids[pos_global]}{serie_letra}"
+                            f"Boleto: {ids[pos_global]}\n"
+                            f"Serie: {serie_letra}\n"
+                            f"Fecha: {fecha_sorteo}"
                         )
                         qr_img = qrcode.make(qr_data)
                         qr_buffer = BytesIO()
                         qr_img.save(qr_buffer, format='PNG')
                         qr_buffer.seek(0)
-                        # TAMAÑO QR GRANDE
-                        size_qr = size_celda * 1.3  # ¡Hazlo bien grande!
-                        offset = (size_qr - size_celda) / 2
-                        c.drawImage(
-                            ImageReader(qr_buffer),
-                            cx - offset, cy - offset,
-                            size_qr, size_qr
-                        )
+                        c.drawImage(ImageReader(qr_buffer), cx+2, cy+2, size_celda-4, size_celda-4)
                     else:
                         c.setFillColorRGB(0, 0, 0)
                         c.drawCentredString(cx + size_celda/2, cy + size_celda*0.28, valor_celda)
             # --- INFORMACIÓN ---
-            serie_letra = SERIE_MAP.get(nombre, nombre)[0]
-            serie_texto = f"{ids[pos_global]}{serie_letra} | {fecha_sorteo}"
+            serie_letra = SERIE_MAP.get(nombre, nombre)
+            serie_texto = f"{pos_global+1}{serie_letra} | {fecha_sorteo}"  # <--- FECHA al lado de la serie
             valor_texto = f": ${valor}"
             tel_texto = f"Tel: {telefono}"
             info_y = y - size_celda*5.17
 
+            # Serie+fecha, valor y teléfono
             c.setFont('Helvetica-Bold', SIZE_INFO)
             c.setFillColorRGB(0, 0, 0)
             c.drawString(x, info_y, serie_texto)
@@ -1056,43 +1030,28 @@ def generar_pdf_planilla(ids, serie_archivo, vendedor, fecha, inicio, fin, serie
 
     # --- NÚMERO GRANDE de la planilla ---
     c.setFont(font_bold, 42)
-    c.drawString(18, alto - 70, str(num_planilla))  # <-- Número de la planilla
+    c.drawString(18, alto - 70, str(num_planilla))  # <-- ¡Aquí se muestra el número de la planilla!
 
-    # ======== QRs SOLO LETRAS Y NÚMEROS (Separador "A") ========
-    serie_letra = serie_map.get(serie_archivo, "")
-    fecha_limpia = fecha.replace("-", "")  # Ej: 2025-06-13 -> 20250613
-
-    # Función para generar el string QR sin símbolos
-    def qr_string(tipo, desde, hasta, serie):
-        return f"SORTEO{fecha_limpia}{tipo}A{desde}A{hasta}{serie}"
-
-    # QR central (rango completo)
-    qr_text_central = qr_string("RG", inicio, fin, serie_letra)
-    qr_central = qrcode.make(qr_text_central)
-    qr_central_buf = BytesIO()
-    qr_central.save(qr_central_buf, format='PNG')
-    qr_central_buf.seek(0)
-    c.drawImage(ImageReader(qr_central_buf), x_central_qr, y_central_qr, 52, 52)
-
-    # QR arriba izquierdo (LADO1, boletos 1-20)
-    lado1_ini = inicio
-    lado1_fin = min(inicio + 19, fin)
-    qr_text_lado1 = qr_string("L1", lado1_ini, lado1_fin, serie_letra)
-    qr1 = qrcode.make(qr_text_lado1)
+    # --- QR arriba izquierdo (para la planilla 1-20) ---
+    qr1 = qrcode.make(f"PLANILLA-{vendedor}-{fecha}-LADO1-{inicio}-{min(inicio+19, fin)}")
     qr_buf1 = BytesIO()
     qr1.save(qr_buf1, format='PNG')
     qr_buf1.seek(0)
     c.drawImage(ImageReader(qr_buf1), x_qr_left, y_qr_left, 52, 52)
 
-    # QR arriba derecho (LADO2, boletos 21-40)
-    lado2_ini = min(inicio + 20, fin)
-    lado2_fin = min(inicio + 39, fin)
-    qr_text_lado2 = qr_string("L2", lado2_ini, lado2_fin, serie_letra)
-    qr2 = qrcode.make(qr_text_lado2)
+    # --- QR arriba derecho (para la planilla 21-40) ---
+    qr2 = qrcode.make(f"PLANILLA-{vendedor}-{fecha}-LADO2-{min(inicio+20, fin)}-{min(inicio+39, fin)}")
     qr_buf2 = BytesIO()
     qr2.save(qr_buf2, format='PNG')
     qr_buf2.seek(0)
     c.drawImage(ImageReader(qr_buf2), x_qr_right, y_qr_right, 52, 52)
+
+    # --- QR central ---
+    qr_central = qrcode.make(f"PLANILLA-{vendedor}-{fecha}-RANGO-{inicio}-{fin}")
+    qr_central_buf = BytesIO()
+    qr_central.save(qr_central_buf, format='PNG')
+    qr_central_buf.seek(0)
+    c.drawImage(ImageReader(qr_central_buf), x_central_qr, y_central_qr, 52, 52)
 
     # --- Líneas y numeración global ---
     c.setFont(font_bold, 17)
@@ -1121,12 +1080,18 @@ def generar_pdf_planilla(ids, serie_archivo, vendedor, fecha, inicio, fin, serie
 
 
 
-DATA_DIR = "data"
-ASIGNACIONES_DIR = "asignaciones"
-COBROS_DIR = "cobros"
+@app.route("/asignar_planillas")
+def asignar_planillas():
+    if not requiere_clave("asignar_planillas"):
+        return redirect(url_for('pedir_clave', seccion="asignar_planillas"))
+    return "<h2>Página de Asignación de Planillas (en construcción)</h2>"
+
+
+
+
+
 VENDEDORES_XML = os.path.join(DATA_DIR, "vendedores.xml")
 
-# 1. UTILIDAD: CARGAR VENDEDORES DESDE /data/vendedores.xml
 def cargar_vendedores():
     if not os.path.exists(VENDEDORES_XML):
         return []
@@ -1141,7 +1106,6 @@ def cargar_vendedores():
         })
     return vendedores
 
-# 2. GUARDAR VENDEDORES NUEVOS O EDITADOS
 def guardar_vendedores(lista_vendedores):
     root = ET.Element("vendedores")
     for vend in lista_vendedores:
@@ -1149,92 +1113,13 @@ def guardar_vendedores(lista_vendedores):
     tree = ET.ElementTree(root)
     tree.write(VENDEDORES_XML, encoding="utf-8", xml_declaration=True)
 
-# 3. PANEL PARA ASIGNAR PLANILLAS
 
-@app.route('/asignar_planillas')
-def asignar_planillas():
-    vendedores = cargar_vendedores()
-    fecha_hoy = date.today().isoformat()  # Ejemplo: '2025-06-03'
-    return render_template('asignar_planillas.html', vendedores=vendedores, fecha_hoy=fecha_hoy)
-
-
-# 4. API PARA AGREGAR PLANILLAS A UN VENDEDOR (NO SOBREESCRIBE, SOLO AGREGA)
-@app.route('/api/agregar_planillas', methods=['POST'])
-def api_agregar_planillas():
-    data = request.get_json()
-    fecha = data.get('fecha')
-    nombre = data.get('nombre')
-    alias = data.get('alias')
-    planillas = data.get('planillas', [])
-
-    if not fecha or not nombre or not alias or not planillas:
-        return jsonify({"success": False, "error": "Datos incompletos"}), 400
-
-    os.makedirs(ASIGNACIONES_DIR, exist_ok=True)
-    xml_path = os.path.join(ASIGNACIONES_DIR, f"{fecha}.xml")
-    # Si existe, actualiza; si no, crea nuevo
-    if os.path.exists(xml_path):
-        tree = ET.parse(xml_path)
-        root = tree.getroot()
-    else:
-        root = ET.Element("asignaciones", fecha=fecha)
-        tree = ET.ElementTree(root)
-
-    # Buscar vendedor en XML
-    vendedor_xml = None
-    for v in root.findall("vendedor"):
-        if v.get("nombre") == nombre:
-            vendedor_xml = v
-            break
-    if vendedor_xml is None:
-        vendedor_xml = ET.SubElement(root, "vendedor", nombre=nombre, alias=alias)
-
-    # No duplicar planillas
-    planillas_existentes = set([p.get("codigo") for p in vendedor_xml.findall("planilla")])
-    for codigo in planillas:
-        if codigo not in planillas_existentes:
-            ET.SubElement(vendedor_xml, "planilla", codigo=codigo)
-            planillas_existentes.add(codigo)
-
-    tree.write(xml_path, encoding="utf-8", xml_declaration=True)
-    return jsonify({"success": True})
-
-# 5. SERVIR ASIGNACIÓN POR FECHA
-@app.route('/asignaciones/<fecha>.xml')
-def servir_asignacion_xml(fecha):
-    archivo = f"{fecha}.xml"
-    return send_from_directory(ASIGNACIONES_DIR, archivo)
-
-    
-
-# 6. API PARA CARGAR ASIGNACIONES DESDE XML (devuelve para la fecha las planillas por vendedor)
-@app.route('/api/asignaciones_fecha')
-def api_asignaciones_fecha():
-    fecha = request.args.get('fecha')
-    if not fecha:
-        return jsonify([])
-    xml_path = os.path.join(ASIGNACIONES_DIR, f"{fecha}.xml")
-    if not os.path.exists(xml_path):
-        return jsonify([])
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-    resultado = []
-    for v in root.findall("vendedor"):
-        nombre = v.get("nombre")
-        alias = v.get("alias", "")
-        planillas = [p.get("codigo") for p in v.findall("planilla")]
-        resultado.append({
-            "nombre": nombre,
-            "alias": alias,
-            "planillas": planillas,
-        })
-    return jsonify(resultado)
-
-# 7. CRUD BÁSICO DE VENDEDORES
 @app.route('/vendedores', methods=['GET'])
 def panel_vendedores():
     vendedores = cargar_vendedores()
     return render_template("panel_vendedores.html", vendedores=vendedores)
+
+
 
 @app.route('/api/vendedores', methods=['POST'])
 def api_agregar_vendedor():
@@ -1274,379 +1159,14 @@ def api_eliminar_vendedor(id):
     guardar_vendedores(vendedores)
     return jsonify({"success": True})
 
-@app.route('/api/agregar_planillas_masivo', methods=['POST'])
-def agregar_planillas_masivo():
-    data = request.json
-    vendedor = data["vendedor"]
-    fecha = data["fecha"]
-    codigos = [c.strip() for c in data["codigos"] if c.strip()]
-    # Lógica para obtener todas las planillas ya asignadas
-    todas_asignadas = get_all_planillas_asignadas()  # <--- deberías implementarla
-    planillas_vendedor = get_planillas_de_vendedor(vendedor, fecha)  # <--- deberías implementarla
+@app.route('/prueba')
+def prueba():
+    print("Entró a la ruta /prueba")
+    return "¡PRUEBA OK!"
 
-    asignadas = []
-    repetidas = []
-    for cod in codigos:
-        if cod in todas_asignadas:
-            repetidas.append(cod)
-        else:
-            asignadas.append(cod)
-            # Lógica para guardar la planilla (agregaPlanillaVendedor...)
-            agregaPlanillaVendedor(vendedor, fecha, cod)
-    # Actualiza el XML, CSV o BD según tu sistema
-
-    return jsonify({
-        "asignadas": asignadas,
-        "repetidas": repetidas
-    })
-
-
-# 8. DASHBOARD CONTABILIDAD
-def cargar_asignacion_planillas(fecha):
-    xml_path = os.path.join(ASIGNACIONES_DIR, f"{fecha}.xml")
-    if not os.path.exists(xml_path):
-        return []
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-    resultado = []
-    for v in root.findall("vendedor"):
-        nombre = v.get("nombre")
-        alias = v.get("alias", "")
-        planillas = [p.get("codigo") for p in v.findall("planilla")]
-        resultado.append({
-            "nombre": nombre,
-            "alias": alias,
-            "planillas": planillas,
-        })
-    return resultado
-
-@app.route('/dashboard_contabilidad')
-def dashboard_contabilidad():
-    fecha_hoy = date.today().isoformat()
-    vendedores = cargar_asignacion_planillas(fecha_hoy)
-    return render_template('dashboard_contabilidad.html', vendedores=vendedores, fecha_hoy=fecha_hoy)
-
-# 9. DESASIGNAR PLANILLA DE UN VENDEDOR (ELIMINAR PLANILLA)
-@app.route('/api/desasignar_planilla', methods=['POST'])
-def api_desasignar_planilla():
-    data = request.get_json()
-    fecha = data.get('fecha')
-    nombre = data.get('nombre')
-    planilla = data.get('planilla')
-
-    if not fecha or not nombre or not planilla:
-        return jsonify({"success": False, "error": "Datos incompletos"}), 400
-
-    xml_path = os.path.join(ASIGNACIONES_DIR, f"{fecha}.xml")
-    if not os.path.exists(xml_path):
-        return jsonify({"success": False, "error": "No existe el archivo de asignaciones"}), 404
-
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-    encontrado = False
-
-    for v in root.findall("vendedor"):
-        if v.get("nombre") == nombre:
-            for p in v.findall("planilla"):
-                if p.get("codigo") == planilla:
-                    v.remove(p)
-                    encontrado = True
-                    break
-
-    if not encontrado:
-        return jsonify({"success": False, "error": "Planilla no encontrada"}), 404
-
-    tree.write(xml_path, encoding="utf-8", xml_declaration=True)
-    return jsonify({"success": True})
-
-
-
-import os
-import xml.etree.ElementTree as ET
-from flask import Flask, request, jsonify
-
-COBROS_DIR = "cobros"
-os.makedirs(COBROS_DIR, exist_ok=True)
-
-COBROS_DIR = "cobros"
-os.makedirs(COBROS_DIR, exist_ok=True)
-
-# Guardar cobros del día
-@app.route("/api/guardar_cobro", methods=["POST"])
-def api_guardar_cobro():
-    data = request.json
-    fecha = data["fecha"]
-    nombre = data["nombre"]
-    boletosDevueltosLista = data["boletosDevueltosLista"]
-    archivo = os.path.join(COBROS_DIR, f"{fecha}.xml")
-    if os.path.exists(archivo):
-        tree = ET.parse(archivo)
-        root = tree.getroot()
-    else:
-        root = ET.Element("cobros", fecha=fecha)
-        tree = ET.ElementTree(root)
-    v = None
-    for vend in root.findall("vendedor"):
-        if vend.get("nombre") == nombre:
-            v = vend
-            break
-    if v is None:
-        v = ET.SubElement(root, "vendedor", nombre=nombre, planillas="1")
-    v.set("estado", "Pagado")
-    # borra boletos anteriores
-    for b in v.findall("boleto"):
-        v.remove(b)
-    for cod in boletosDevueltosLista:
-        ET.SubElement(v, "boleto").text = cod
-    tree.write(archivo, encoding="utf-8", xml_declaration=True)
-    return jsonify({"ok": True})
-# Leer cobros del día
-@app.route("/api/cobros_fecha")
-def api_cobros_fecha():
-    fecha = request.args.get("fecha")
-    archivo = os.path.join(COBROS_DIR, f"{fecha}.xml")
-    vendedores = []
-    if os.path.exists(archivo):
-        tree = ET.parse(archivo)
-        root = tree.getroot()
-        for v in root.findall("vendedor"):
-            vendedores.append({
-                "nombre": v.get("nombre"),
-                "planillas": int(v.get("planillas", "1")),
-                "boletosDevueltosLista": [b.text for b in v.findall("boleto")],
-                "estado": v.get("estado", "Pendiente")
-            })
-    else:
-        # aquí deberías cargar los vendedores asignados desde planillas si no existe el cobro
-        pass
-    return jsonify(vendedores)
-
-@app.route('/api/planillas_vendedor')
-def api_planillas_vendedor():
-    fecha = request.args.get("fecha")
-    nombre = request.args.get("nombre")
-    xml_path = os.path.join("data", "asignaciones", f"{fecha}.xml")
-    if not (fecha and nombre and os.path.exists(xml_path)):
-        return jsonify([])
-    import xml.etree.ElementTree as ET
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-    for v in root.findall("vendedor"):
-        if v.get("nombre") == nombre:
-            planillas = [p.get("codigo") for p in v.findall("planilla")]
-            return jsonify(planillas)
-    return jsonify([])
-
-@app.route("/api/eliminar_cobro", methods=["POST"])
-def api_eliminar_cobro():
-    data = request.json
-    fecha = data["fecha"]
-    nombre = data["nombre"]
-    archivo = os.path.join(COBROS_DIR, f"{fecha}.xml")
-    if os.path.exists(archivo):
-        tree = ET.parse(archivo)
-        root = tree.getroot()
-        for v in root.findall("vendedor"):
-            if v.get("nombre") == nombre:
-                v.set("estado", "Pendiente")
-                for b in v.findall("boleto"):
-                    v.remove(b)
-    tree.write(archivo, encoding="utf-8", xml_declaration=True)
-    return jsonify({"ok": True})
-
-    
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-
-
-# === RUTAS DE ARCHIVOS Y CARPETAS ===
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'static', 'data')
-FACTURAS_DIR = os.path.join(BASE_DIR, 'static', 'facturas')
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(FACTURAS_DIR, exist_ok=True)
-
-BONIFICACIONES_XML = os.path.join(DATA_DIR, 'bonificaciones.xml')
-GASTOS_XML = os.path.join(DATA_DIR, 'gastos.xml')
-EMPLEADOS_XML = os.path.join(DATA_DIR, 'empleados.xml')
-VENTAS_XML = os.path.join(DATA_DIR, 'ventas.xml')  # Simulación archivo ventas
-
-# === FUNCIONES DE BONIFICACIONES ===
-def leer_bonificaciones():
-    if not os.path.exists(BONIFICACIONES_XML):
-        root = ET.Element('bonificaciones')
-        ET.ElementTree(root).write(BONIFICACIONES_XML, encoding='utf-8', xml_declaration=True)
-    tree = ET.parse(BONIFICACIONES_XML)
-    root = tree.getroot()
-    bonificaciones = []
-    for b in root.findall('bonificacion'):
-        bonificaciones.append({
-            'fecha': b.get('fecha'),
-            'vendedor': b.get('vendedor'),
-            'motivo': b.get('motivo'),
-            'monto': float(b.get('monto', '0')),
-            'observacion': b.get('observacion', '')
-        })
-    return bonificaciones
-
-def guardar_bonificacion(fecha, vendedor, motivo, monto, observacion):
-    if not os.path.exists(BONIFICACIONES_XML):
-        root = ET.Element('bonificaciones')
-        ET.ElementTree(root).write(BONIFICACIONES_XML, encoding='utf-8', xml_declaration=True)
-    tree = ET.parse(BONIFICACIONES_XML)
-    root = tree.getroot()
-    nueva = ET.SubElement(root, 'bonificacion')
-    nueva.set('fecha', fecha)
-    nueva.set('vendedor', vendedor)
-    nueva.set('motivo', motivo)
-    nueva.set('monto', str(monto))
-    nueva.set('observacion', observacion)
-    tree.write(BONIFICACIONES_XML, encoding='utf-8', xml_declaration=True)
-
-@app.route('/bonificaciones', methods=['GET', 'POST'])
-def panel_bonificaciones():
-    if request.method == 'POST':
-        fecha = request.form.get('fecha', date.today().isoformat())
-        vendedor = request.form['vendedor']
-        motivo = request.form['motivo']
-        monto = request.form['monto']
-        observacion = request.form.get('observacion', '')
-        guardar_bonificacion(fecha, vendedor, motivo, monto, observacion)
-        flash('Bonificación registrada exitosamente.', 'success')
-        return redirect(url_for('panel_bonificaciones'))
-    bonificaciones = leer_bonificaciones()
-    return render_template('bonificaciones_panel.html', bonificaciones=bonificaciones)
-
-# === FUNCIONES DE GASTOS ===
-def leer_gastos():
-    if not os.path.exists(GASTOS_XML):
-        root = ET.Element('gastos')
-        ET.ElementTree(root).write(GASTOS_XML, encoding='utf-8', xml_declaration=True)
-    tree = ET.parse(GASTOS_XML)
-    root = tree.getroot()
-    gastos = []
-    for g in root.findall('gasto'):
-        gastos.append({
-            'fecha': g.get('fecha'),
-            'concepto': g.get('concepto'),
-            'monto': float(g.get('monto', '0')),
-            'factura': g.get('factura', ''),
-            'observacion': g.get('observacion', '')
-        })
-    return gastos
-
-def guardar_gasto(fecha, concepto, monto, factura, observacion):
-    if not os.path.exists(GASTOS_XML):
-        root = ET.Element('gastos')
-        ET.ElementTree(root).write(GASTOS_XML, encoding='utf-8', xml_declaration=True)
-    tree = ET.parse(GASTOS_XML)
-    root = tree.getroot()
-    nuevo = ET.SubElement(root, 'gasto')
-    nuevo.set('fecha', fecha)
-    nuevo.set('concepto', concepto)
-    nuevo.set('monto', str(monto))
-    nuevo.set('factura', factura)
-    nuevo.set('observacion', observacion)
-    tree.write(GASTOS_XML, encoding='utf-8', xml_declaration=True)
-
-@app.route('/gastos', methods=['GET', 'POST'])
-def panel_gastos():
-    if request.method == 'POST':
-        fecha = request.form.get('fecha', date.today().isoformat())
-        concepto = request.form['concepto']
-        monto = request.form['monto']
-        observacion = request.form.get('observacion', '')
-        factura_file = request.files.get('factura')
-        nombre_factura = ""
-        if factura_file and factura_file.filename:
-            nombre_factura = secure_filename(factura_file.filename)
-            factura_file.save(os.path.join(FACTURAS_DIR, nombre_factura))
-        guardar_gasto(fecha, concepto, monto, nombre_factura, observacion)
-        flash('Gasto registrado exitosamente.', 'success')
-        return redirect(url_for('panel_gastos'))
-    gastos = leer_gastos()
-    return render_template('gastos_panel.html', gastos=gastos)
-
-# === FUNCIONES DE EMPLEADOS/SUELDOS ===
-def leer_empleados():
-    if not os.path.exists(EMPLEADOS_XML):
-        root = ET.Element('empleados')
-        ET.ElementTree(root).write(EMPLEADOS_XML, encoding='utf-8', xml_declaration=True)
-    tree = ET.parse(EMPLEADOS_XML)
-    root = tree.getroot()
-    empleados = []
-    for e in root.findall('empleado'):
-        empleados.append({
-            'nombre': e.get('nombre'),
-            'sueldo': float(e.get('sueldo', '0')),
-            'pagos': e.get('pagos', '')  # lista separada por coma
-        })
-    return empleados
-
-def guardar_empleado(nombre, sueldo):
-    if not os.path.exists(EMPLEADOS_XML):
-        root = ET.Element('empleados')
-        ET.ElementTree(root).write(EMPLEADOS_XML, encoding='utf-8', xml_declaration=True)
-    tree = ET.parse(EMPLEADOS_XML)
-    root = tree.getroot()
-    nuevo = ET.SubElement(root, 'empleado')
-    nuevo.set('nombre', nombre)
-    nuevo.set('sueldo', str(sueldo))
-    nuevo.set('pagos', '')
-    tree.write(EMPLEADOS_XML, encoding='utf-8', xml_declaration=True)
-
-def registrar_pago_empleado(nombre, fecha_pago):
-    tree = ET.parse(EMPLEADOS_XML)
-    root = tree.getroot()
-    for e in root.findall('empleado'):
-        if e.get('nombre') == nombre:
-            pagos = e.get('pagos', '')
-            lista = pagos.split(',') if pagos else []
-            lista.append(fecha_pago)
-            e.set('pagos', ','.join(lista))
-    tree.write(EMPLEADOS_XML, encoding='utf-8', xml_declaration=True)
-
-@app.route('/empleados', methods=['GET', 'POST'])
-def panel_empleados():
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        sueldo = request.form['sueldo']
-        guardar_empleado(nombre, sueldo)
-        flash('Empleado agregado exitosamente.', 'success')
-        return redirect(url_for('panel_empleados'))
-    empleados = leer_empleados()
-    return render_template('empleados_panel.html', empleados=empleados)
-
-@app.route('/empleados/pagar', methods=['POST'])
-def pagar_empleado():
-    nombre = request.form['nombre']
-    fecha_pago = request.form.get('fecha_pago', date.today().isoformat())
-    registrar_pago_empleado(nombre, fecha_pago)
-    flash('Pago registrado.', 'success')
-    return redirect(url_for('panel_empleados'))
-
-# === FUNCIONES DE VENTAS (SIMULADAS, ADÁPTALO A TU SISTEMA) ===
-def leer_ventas():
-    if not os.path.exists(VENTAS_XML):
-        root = ET.Element('ventas')
-        ET.ElementTree(root).write(VENTAS_XML, encoding='utf-8', xml_declaration=True)
-    tree = ET.parse(VENTAS_XML)
-    root = tree.getroot()
-    ventas = []
-    for v in root.findall('venta'):
-        ventas.append({
-            'fecha': v.get('fecha'),
-            'vendedor': v.get('vendedor'),
-            'total': float(v.get('total', '0'))
-        })
-    return ventas
-
-def total_recaudado():
-    ventas = leer_ventas()
-    return sum(v['total'] for v in ventas)
-
-# === DASHBOARD PRINCIPAL ===
 
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
