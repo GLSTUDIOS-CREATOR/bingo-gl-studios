@@ -5,3 +5,4 @@ lxml
 qrcode
 reportlab
 PyPDF2
+openpyxl>=3.0.0
