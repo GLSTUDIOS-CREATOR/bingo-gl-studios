@@ -14,6 +14,7 @@ from PyPDF2 import PdfMerger
 import xml.etree.ElementTree as ET
 import re
 import json
+from functools import lru_cache
 
 # Blueprints de usuarios
 from usuarios import bp_usuarios   # Asegúrate que tu archivo usuarios.py tenga 'bp_usuarios' definido correctamente
@@ -24,6 +25,19 @@ app = Flask(__name__)
 
 import os
 import pandas as pd
+
+# ——— Funciones para cargar y cachear DataFrames ———
+
+@lru_cache(maxsize=None)
+def cargar_df_excel(ruta):
+    print(f"🔄 Cargando Excel por primera vez: {ruta}")
+    return pd.read_excel(ruta, dtype=str).fillna('')
+
+@lru_cache(maxsize=None)
+def cargar_df_csv(ruta):
+    print(f"🔄 Cargando CSV por primera vez: {ruta}")
+    return pd.read_csv(ruta, dtype=str).fillna('')
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -831,11 +845,14 @@ def impresion():
                 return render_template("error.html", mensaje=f"Archivo no encontrado en {path}")
 
             try:
-                df = pd.read_excel(path, dtype=str).fillna('')
+                if path.lower().endswith('.csv'):
+                    df = cargar_df_csv(path)
+                else:
+                    df = cargar_df_excel(path)
                 if df.empty:
                     raise ValueError("Archivo cargado vacío.")
             except Exception as e:
-                return render_template("error.html", mensaje=f"Error al cargar Excel: {e}")
+                return render_template("error.html", mensaje=f"Error al cargar datos: {e}")
 
             ids = df[df.columns[0]].astype(str).tolist()
 
@@ -861,9 +878,9 @@ def impresion():
             fecha_planilla = request.form['fecha_planilla']
             path = os.path.join(DATA_DIR, archivo)
             if archivo.lower().endswith('.csv'):
-                df = pd.read_csv(path, dtype=str).fillna('')
+                df = cargar_df_csv(path)
             else:
-                df = pd.read_excel(path, dtype=str).fillna('')
+                df = cargar_df_excel(path)
 
             ids = df[df.columns[0]].astype(str).tolist()
             ids = ids[inicio-1:fin]
