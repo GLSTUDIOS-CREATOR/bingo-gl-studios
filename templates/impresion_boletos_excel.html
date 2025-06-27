@@ -2,288 +2,288 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Impresión de Boletos y Planillas</title>
+  <title>Impresión de Boletos y Planillas | GL Studios</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Montserrat + FontAwesome -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <style>
     :root {
-      --color-primary:    #1A73E8;
-      --color-secondary:  #F1F3F4;
-      --color-text:       #202124;
-      --color-bg:         #FFFFFF;
-      --color-border:     #E0E0E0;
-      --color-success:    #28A745;
-      --radius:           8px;
-      --shadow-light:     0 2px 8px rgba(0,0,0,0.1);
-      --font-main:        'Montserrat', sans-serif;
-      --transition-fast:  0.2s ease-in-out;
+      --primary:       #1a73e8;
+      --primary-dark:  #1558b0;
+      --bg-light:      #f5f7fa;
+      --bg-card:       #ffffff;
+      --text-dark:     #212121;
+      --border:        #e0e0e0;
+      --radius:        8px;
+      --shadow:        0 6px 20px rgba(0,0,0,0.08);
+      --font:          'Montserrat', sans-serif;
+      --transition:    0.3s ease-in-out;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: var(--font-main);
-      background: var(--color-secondary);
-      color: var(--color-text);
-      line-height: 1.5;
+      font-family: var(--font);
+      background: var(--bg-light);
+      color: var(--text-dark);
+      line-height: 1.6;
     }
-
-    /* HEADER CORPORATIVO */
     header {
-      background: var(--color-primary);
-      color: white;
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      box-shadow: var(--shadow-light);
+      position: sticky; top: 0;
+      background: var(--primary);
+      padding: 1rem 2rem;
+      display: flex; align-items: center;
+      box-shadow: var(--shadow);
+      z-index: 100;
     }
-    header img {
-      height: 48px;
-      margin-right: 16px;
-    }
+    header img { height: 40px; margin-right: 1rem; }
     header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
+      color: #fff; font-size: 1.75rem;
+      font-weight: 700; letter-spacing: .5px;
     }
-
     main {
-      max-width: 1100px;
-      margin: 32px auto;
-      padding: 0 16px;
+      max-width: 1200px; margin: 2rem auto; padding: 0 1rem;
     }
-
-    .panels {
-      display: flex;
-      gap: 32px;
-      flex-wrap: wrap;
-      justify-content: space-between;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 2rem;
     }
-    .panel {
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
+    .card {
+      background: var(--bg-card);
       border-radius: var(--radius);
-      box-shadow: var(--shadow-light);
-      flex: 1 1 380px;
-      max-width: 480px;
-      padding: 24px;
-      transition: transform var(--transition-fast);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex; flex-direction: column;
     }
-    .panel:hover {
-      transform: translateY(-4px);
+    .card-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff; padding: 1rem 1.5rem;
+      font-size: 1.25rem; font-weight: 600;
+      display: flex; align-items: center;
     }
-    .panel h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 20px;
-      color: var(--color-primary);
-      border-left: 4px solid var(--color-primary);
-      padding-left: 12px;
+    .card-header i { margin-right: .75rem; font-size: 1.4rem; }
+    .card-body { padding: 1.5rem; flex: 1; }
+    fieldset {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem; margin-bottom: 1.5rem;
     }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .col {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+    legend {
+      padding: 0 .5rem; font-weight: 600; color: var(--primary);
     }
     label {
-      font-weight: 600;
-      margin-bottom: 6px;
+      font-weight: 600; margin-bottom: .25rem; display: block;
     }
-    input,
-    select {
-      padding: 10px;
-      border: 1px solid var(--color-border);
+    input, select {
+      width: 100%; padding: .6rem .75rem;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       font-size: 1rem;
-      transition: border-color var(--transition-fast);
+      transition: border-color var(--transition), box-shadow var(--transition);
     }
-    input:focus,
-    select:focus {
-      border-color: var(--color-primary);
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26,115,232,0.2);
       outline: none;
     }
-    .checkbox {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(120px,1fr));
+      gap: 1rem; margin-bottom: 1rem;
     }
-
     .btn {
-      padding: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: background var(--transition-fast), transform var(--transition-fast);
+      display: inline-flex; align-items: center;
+      justify-content: center; gap: .5rem;
+      padding: .75rem 1.5rem; font-size: 1rem;
+      font-weight: 600; border: none;
+      border-radius: var(--radius); cursor: pointer;
+      transition: background var(--transition), transform var(--transition);
+      color: #fff; text-decoration: none;
     }
-    .btn.primary {
-      background: var(--color-primary);
-      color: white;
+    .btn-primary { background: var(--primary); }
+    .btn-primary:hover {
+      background: var(--primary-dark); transform: translateY(-2px);
     }
-    .btn.primary:hover {
-      background: darken(var(--color-primary), 10%);
-      transform: translateY(-2px);
+    .btn-success { background: #28a745; }
+    .btn-success:hover {
+      background: #1f7a34; transform: translateY(-2px);
     }
-    .btn.success {
-      background: var(--color-success);
-      color: white;
+    .checkbox {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .9rem; margin-bottom: 1rem;
     }
-    .btn.success:hover {
-      background: darken(var(--color-success), 10%);
-      transform: translateY(-2px);
-    }
-
     .preview {
-      text-align: center;
-      margin-top: 12px;
+      text-align: center; margin-top: 1rem;
     }
     .preview img {
-      width: 80px;
-      height: 80px;
-      object-fit: contain;
-      border-radius: var(--radius);
-      display: none;
-      margin-bottom: 8px;
+      width: 80px; height: 80px; object-fit: contain;
+      border-radius: var(--radius); display: none;
+      margin-bottom: .5rem; box-shadow: var(--shadow);
     }
-    .preview p {
-      font-size: 0.9rem;
-      color: #5f6368;
+    .preview p { color: #5f6368; font-size: .9rem; }
+    footer {
+      text-align: center; padding: 1rem 0;
+      color: #666; font-size: .9rem; margin-top: 2rem;
     }
-
-    @media (max-width: 800px) {
-      .panels {
-        flex-direction: column;
-        gap: 24px;
-      }
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.5rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
   <header>
     <img src="{{ url_for('static', filename='golpe_suerte_logo.png') }}" alt="Logo GL Studios">
     <h1>Impresión de Boletos y Planillas</h1>
   </header>
 
   <main>
-    <div class="panels">
+    <div class="grid">
 
-      <!-- PANEL DE BOLETOS -->
-      <section class="panel" aria-labelledby="boletos-title">
-        <h2 id="boletos-title">🎫 Boletos de Bingo</h2>
-        <form method="post">
-          <input type="hidden" name="form_type" value="boletos">
+      <!-- BOLETOS -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-ticket-alt"></i> Boletos de Bingo
+        </div>
+        <div class="card-body">
+          <form method="post">
+            <input type="hidden" name="form_type" value="boletos">
 
-          <div class="row">
-            <div class="col">
-              <label for="serie_archivo">Serie archivo</label>
-              <select id="serie_archivo" name="serie_archivo" required>
-                {% for s in series %}<option>{{s}}</option>{% endfor %}
-              </select>
+            <fieldset>
+              <legend>Serie y rango</legend>
+              <div class="row">
+                <div>
+                  <label for="serie_archivo">Serie archivo</label>
+                  <select id="serie_archivo" name="serie_archivo" required>
+                    <option disabled selected>Selecciona serie</option>
+                    {% for file,label in series %}
+                      <option value="{{ file }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label for="serie_inicio">Inicio</label>
+                  <input id="serie_inicio" name="serie_inicio" type="text" placeholder="1">
+                </div>
+                <div>
+                  <label for="serie_fin">Fin</label>
+                  <input id="serie_fin" name="serie_fin" type="text" placeholder="10">
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Detalles y contacto</legend>
+              <div class="row">
+                <div>
+                  <label for="valor">Valor boleto</label>
+                  <input id="valor" name="valor" type="text" value="1">
+                </div>
+                <div>
+                  <label for="telefono">Teléfono</label>
+                  <input id="telefono" name="telefono" type="text" value="0993239962">
+                </div>
+                <div>
+                  <label for="fecha_sorteo">Fecha sorteo</label>
+                  <input id="fecha_sorteo" name="fecha_sorteo" type="date" value="{{ fecha_hoy }}">
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Reintegro</legend>
+              <div class="row">
+                <div>
+                  <label for="reintegro_especial">Reintegro</label>
+                  <select id="reintegro_especial" name="reintegro_especial">
+                    <option value="">(ninguno)</option>
+                    {% for img in reintegros %}
+                      <option value="{{ img }}">{{ img }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label for="cant_reintegro_especial">Cantidad</label>
+                  <input id="cant_reintegro_especial" name="cant_reintegro_especial" type="number" min="0" value="0">
+                </div>
+                <div class="checkbox">
+                  <input type="checkbox" id="incluir_aleatorio" name="incluir_aleatorio" value="1" checked>
+                  <label for="incluir_aleatorio">Llenar el resto aleatorio</label>
+                </div>
+              </div>
+            </fieldset>
+
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-file-pdf"></i> Generar PDF de Boletos
+            </button>
+
+            <div class="preview">
+              <img id="preview-img" src="" alt="Vista previa de reintegro">
+              <p id="preview-file">Selecciona un reintegro</p>
             </div>
-            <div class="col">
-              <label for="serie_inicio">Inicio</label>
-              <input id="serie_inicio" name="serie_inicio" type="text" placeholder="1">
-            </div>
-            <div class="col">
-              <label for="serie_fin">Fin</label>
-              <input id="serie_fin" name="serie_fin" type="text" placeholder="10">
-            </div>
-          </div>
+          </form>
+        </div>
+      </div>
 
-          <div class="row">
-            <div class="col">
-              <label for="valor">Valor boleto</label>
-              <input id="valor" name="valor" type="text" value="1">
-            </div>
-            <div class="col">
-              <label for="telefono">Teléfono</label>
-              <input id="telefono" name="telefono" type="text" value="0993239962">
-            </div>
-          </div>
+      <!-- PLANILLA -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-file-alt"></i> Planilla para Vendedor
+        </div>
+        <div class="card-body">
+          <form method="post">
+            <input type="hidden" name="form_type" value="planilla">
 
-          <div class="col">
-            <label for="fecha_sorteo">Fecha sorteo</label>
-            <input id="fecha_sorteo" name="fecha_sorteo" type="date" value="{{fecha_hoy}}">
-          </div>
+            <fieldset>
+              <legend>Serie y rango</legend>
+              <div class="row">
+                <div>
+                  <label for="serie_archivo_planilla">Serie archivo</label>
+                  <select id="serie_archivo_planilla" name="serie_archivo_planilla" required>
+                    <option disabled selected>Selecciona serie</option>
+                    {% for file,label in series %}
+                      <option value="{{ file }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label for="planilla_inicio">Inicio</label>
+                  <input id="planilla_inicio" name="planilla_inicio" type="number" min="1" value="1">
+                </div>
+                <div>
+                  <label for="planilla_fin">Fin</label>
+                  <input id="planilla_fin" name="planilla_fin" type="number" min="1" value="40">
+                </div>
+              </div>
+            </fieldset>
 
-          <div class="row">
-            <div class="col">
-              <label for="reintegro_especial">Reintegro</label>
-              <select id="reintegro_especial" name="reintegro_especial">
-                <option value="">(ninguno)</option>
-                {% for r in reintegros %}<option>{{r}}</option>{% endfor %}
-              </select>
-            </div>
-            <div class="col">
-              <label for="cant_reintegro_especial">Cantidad</label>
-              <input id="cant_reintegro_especial" name="cant_reintegro_especial" type="number" min="0" value="0">
-            </div>
-          </div>
+            <fieldset>
+              <legend>Vendedor y fecha</legend>
+              <div class="row">
+                <div>
+                  <label for="nombre_vendedor">Vendedor</label>
+                  <input id="nombre_vendedor" name="nombre_vendedor" type="text" placeholder="Nombre vendedor">
+                </div>
+                <div>
+                  <label for="fecha_planilla">Fecha impresión</label>
+                  <input id="fecha_planilla" name="fecha_planilla" type="date" value="{{ fecha_hoy }}">
+                </div>
+              </div>
+            </fieldset>
 
-          <div class="checkbox">
-            <input type="checkbox" id="incluir_aleatorio" name="incluir_aleatorio" value="1" checked>
-            <label for="incluir_aleatorio">Llenar el resto aleatorio</label>
-          </div>
-
-          <button class="btn primary" type="submit">Generar PDF de Boletos</button>
-
-          <div class="preview">
-            <img id="preview-img" src="" alt="Vista previa de reintegro">
-            <p id="preview-file">Selecciona un reintegro</p>
-          </div>
-        </form>
-      </section>
-
-      <!-- PANEL DE PLANILLA -->
-      <section class="panel" aria-labelledby="planilla-title">
-        <h2 id="planilla-title">📄 Planilla para Vendedor</h2>
-        <form method="post">
-          <input type="hidden" name="form_type" value="planilla">
-
-          <div class="row">
-            <div class="col">
-              <label for="serie_archivo_planilla">Serie archivo</label>
-              <select id="serie_archivo_planilla" name="serie_archivo_planilla" required>
-                {% for s in series %}<option>{{s}}</option>{% endfor %}
-              </select>
-            </div>
-            <div class="col">
-              <label for="planilla_inicio">Inicio</label>
-              <input id="planilla_inicio" name="planilla_inicio" type="number" min="1" value="1">
-            </div>
-            <div class="col">
-              <label for="planilla_fin">Fin</label>
-              <input id="planilla_fin" name="planilla_fin" type="number" min="1" value="40">
-            </div>
-          </div>
-
-          <div class="col">
-            <label for="nombre_vendedor">Vendedor</label>
-            <input id="nombre_vendedor" name="nombre_vendedor" type="text" placeholder="Nombre vendedor">
-          </div>
-
-          <div class="col">
-            <label for="fecha_planilla">Fecha impresión</label>
-            <input id="fecha_planilla" name="fecha_planilla" type="date" value="{{fecha_hoy}}">
-          </div>
-
-          <button class="btn success" type="submit">Imprimir Planilla</button>
-        </form>
-      </section>
+            <button type="submit" class="btn btn-success w-100">
+              <i class="fas fa-print"></i> Imprimir Planilla
+            </button>
+          </form>
+        </div>
+      </div>
 
     </div>
   </main>
+
+  <footer>
+    &copy; {{ fecha_hoy[:4] }} GL Studios. Todos los derechos reservados.
+  </footer>
 
   <script>
     (function(){
@@ -295,7 +295,7 @@
         if (sel.value) {
           img.src = path + sel.value;
           img.style.display = 'block';
-          txt.textContent = sel.value.replace('.png','').replace(/_/g,' ').toUpperCase();
+          txt.textContent = sel.value.split('.')[0].replace(/_/g,' ').toUpperCase();
         } else {
           img.style.display = 'none';
           txt.textContent = 'Selecciona un reintegro';
