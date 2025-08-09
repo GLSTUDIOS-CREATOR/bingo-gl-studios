@@ -16,6 +16,10 @@ import xml.etree.ElementTree as ET
 import re
 import json
 
+
+from functools import lru_cache
+
+
 # Blueprints de usuarios
 from usuarios import bp_usuarios   # Asegúrate que tu archivo usuarios.py tenga 'bp_usuarios' definido correctamente
 
@@ -31,9 +35,25 @@ app = Flask(__name__)
 import os
 import pandas as pd
 
+# ——— Funciones para cargar y cachear DataFrames ———
+
+@lru_cache(maxsize=None)
+def cargar_df_excel(ruta):
+    print(f"🔄 Cargando Excel por primera vez: {ruta}")
+    return pd.read_excel(ruta, dtype=str).fillna('')
+
+@lru_cache(maxsize=None)
+def cargar_df_csv(ruta):
+    print(f"🔄 Cargando CSV por primera vez: {ruta}")
+    return pd.read_csv(ruta, dtype=str).fillna('')
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 ARCHIVO_NUMEROS_MARCADOS = os.path.join(DATA_DIR, "numeros_marcados.txt")
+
+
+
 
 
 ARCHIVOS_CARTONES = [
@@ -912,13 +932,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 REINTEGROS_DIR = os.path.join(DATA_DIR, "REINTEGROS")
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
-# ── CALIBRACIÓN GLOBAL ────────────────────────────────────────────
-# Ajusta estos valores (pt) hasta que tu PDF cuadre con la impresora:
-CALIB_X =  10    # positivo → desplaza todo hacia la derecha
-CALIB_Y = -20    # negativo → desplaza todo hacia arriba
 
 
-# ── CONSTANTES DE DISEÑO ─────────────────────────────────────────
+
+# ── CONSTANTES DE DISEÑO ──
 COLUMNAS      = 2      # boletos por fila
 FILAS         = 4      # filas de boletos por página
 MARGEN_H      = 14     # margen general (izq/dcha hoja)
@@ -927,33 +944,32 @@ ESPACIO_V     = 35     # espacio vertical entre celdas
 
 GRID_SCALE    = 0.9    # compacidad del bloque 5×5 (0.0–1.0)
 CELL_ROT      = -90    # rotación de la rejilla de números
-GRID_OFFSET_X = +60    # desplazamiento horizontal global de la rejilla
-GRID_OFFSET_Y = -10    # desplazamiento vertical global de la rejilla
+GRID_OFFSET_X =  +60   # desplazamiento horizontal global de la rejilla
+GRID_OFFSET_Y =  -10   # desplazamiento vertical global de la rejilla
 
-SIZE_NUM      = 20     # tamaño fuente de los números de la rejilla
-SIZE_ID       = 10     # tamaño fuente del ID del boleto (destacado)
-INFO_FSIZE    = 9     # tamaño de fuente de la línea de info
-SIZE_INFO     = INFO_FSIZE
+SIZE_NUM      = 20     # tamaño fuente de los números
+
+INFO_FSIZE    = 10     # tamaño de fuente de la línea de info
 INFO_ROT      = -90    # rotación de la línea de info
 INFO_DX       = -140   # desplazamiento X global de la info
-INFO_DY       = +80    # desplazamiento Y global de la info
+INFO_DY       =   80   # desplazamiento Y global de la info
 
-REINT_W       = 45     # ancho del icono de reintegro
-REINT_H       = 45     # alto del icono de reintegro
+REINT_W       = 50     # ancho del icono de reintegro
+REINT_H       = 50     # alto del icono de reintegro
 REINT_ROT     = -90    # rotación del icono de reintegro
-REINT_DX      = -REINT_W + 170  # desplazamiento X global del reintegro
-REINT_DY      = +140            # desplazamiento Y global del reintegro
+REINT_DX      = -REINT_W + 260  # desplazamiento X global del reintegro
+REINT_DY      = +170            # desplazamiento Y global del reintegro
 
 # ── Offsets específicos por boleto (0-based) ──
 per_cell_offsets = {
-    0: {"grid_x": -95, "grid_y": -80, "info_x": 116.8, "info_y": 113, "rein_x": 60, "rein_y":  -265},
-    1: {"grid_x":-95, "grid_y": -70, "info_x":  120, "info_y": 113, "rein_x": 70,  "rein_y": -265},
-    2: {"grid_x": -95, "grid_y": -80, "info_x": 116.8, "info_y": 113, "rein_x": 60, "rein_y":  -265},
-    3: {"grid_x": -95, "grid_y": -70, "info_x": 120, "info_y": 113, "rein_x": 70, "rein_y":  -265},
-    4: {"grid_x": -95, "grid_y": -80, "info_x": 116.8, "info_y": 113, "rein_x": 60, "rein_y":  -265},
-    5: {"grid_x": -95, "grid_y": -70, "info_x": 120, "info_y": 113, "rein_x": 70, "rein_y":  -265},
-    6: {"grid_x": -95, "grid_y": -80, "info_x": 116.8, "info_y": 113, "rein_x": 60, "rein_y":  -265},
-    7: {"grid_x": -95, "grid_y": -70, "info_x": 120, "info_y": 113, "rein_x": 70, "rein_y":  -265},
+    0: {'grid_x': +0,  'grid_y': -70, 'rein_x':REINT_DX-30,      'rein_y': REINT_DY -5},
+    1: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    2: {'grid_x': +0, 'grid_y':  -70, 'rein_x':REINT_DX-30,      'rein_y': REINT_DY -5},
+    3: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    4: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    5: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    6: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    7: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
 }
 
 
@@ -1094,130 +1110,147 @@ def editor_boletos():
 
 
 def generar_pdf_boletos_excel(
-    ids, registros, valor, telefono,
+    ids, boletos, valor, telefono,
     nombre, reintegro_especial,
     cant_especial, reintegros,
-    incluir_aleatorio, fecha_sorteo
+    incluir_aleatorio, fecha_sorteo,
+    debug: bool = False
 ):
-    buf = BytesIO()
-    c   = canvas.Canvas(buf, pagesize=A4)
+    """
+    Genera un PDF A4 con 8 boletos (2×4). Cada boleto incluye:
+      1) Rejilla 5×5 de números (compactada y rotada CELL_ROT),
+         desplazada individualmente según per_cell_offsets.
+      2) Línea de info rotada (serie|fecha|valor|tel).
+      3) Icono de reintegro rotado y posicionado.
+    """
+    # Offsets por defecto (globales)
+    default_offsets = {
+        'grid_x': GRID_OFFSET_X,
+        'grid_y': GRID_OFFSET_Y,
+        'info_x': INFO_DX,
+        'info_y': INFO_DY,
+        'rein_x': REINT_DX,
+        'rein_y': REINT_DY,
+    }
+
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
     ancho_pg, alto_pg = A4
 
-    # convertir DataFrame a lista de dicts si hace falta
-    if hasattr(registros, "to_dict"):
-        registros = registros.to_dict("records")
-    elif registros and isinstance(registros[0], str):
-        registros = [{} for _ in registros]
-
-    N = len(registros)
-    esp_idx = random.sample(range(N), min(N, cant_especial)) if reintegro_especial else []
-    ale_idx = [i for i in range(N) if i not in esp_idx] if incluir_aleatorio else []
-
-    # dimensiones de cada boleto
+    # ── Tamaño de cada “celda de boleto” ──
     ancho_bol = (ancho_pg - 2*MARGEN_H - ESPACIO_H*(COLUMNAS-1)) / COLUMNAS
-    alto_bol  = (alto_pg  - 2*MARGEN_H - ESPACIO_V*(FILAS   -1)) / FILAS
+    alto_bol  = (alto_pg  - 2*MARGEN_H - ESPACIO_V*(FILAS-1))    / FILAS
+
+    # ── Tamaño de cada casilla dentro del bloque 5×5 ──
     size_celda = min(ancho_bol, alto_bol) * GRID_SCALE / 5
 
-    # iterar páginas
+    # índices para reintegros especiales y aleatorios
+    N = len(boletos)
+    idx_esp = random.sample(range(N), min(N, cant_especial)) if reintegro_especial else []
+    idx_ale = [i for i in range(N) if i not in idx_esp] if incluir_aleatorio else []
+
+    # convertir DataFrame a lista de dicts si hace falta
+    if hasattr(boletos, 'to_dict'):
+        boletos = boletos.to_dict(orient='records')
+
+    # ── Recorremos páginas de 8 boletos ──
     for start in range(0, N, COLUMNAS*FILAS):
-        # re-aplico calibración al inicio de CADA página
-        c.saveState()
-        c.translate(CALIB_X, CALIB_Y)
+        chunk = boletos[start:start + COLUMNAS*FILAS]
+        for idx_in_page, row in enumerate(chunk):
+            pos = start + idx_in_page
+            col = idx_in_page % COLUMNAS
+            fil = idx_in_page // COLUMNAS
 
-        chunk = registros[start:start + COLUMNAS*FILAS]
-        for i, row in enumerate(chunk):
-            pos = start + i
-            col = i % COLUMNAS
-            fil = i // COLUMNAS
-
+            # esquina sup-izq de la celda de boleto
             x0 = MARGEN_H + col*(ancho_bol + ESPACIO_H)
             y0 = alto_pg - MARGEN_H - fil*(alto_bol + ESPACIO_V)
-            cx, cy = x0 + ancho_bol/2, y0 - alto_bol/2
+            cx = x0 + ancho_bol/2
+            cy = y0 - alto_bol/2
 
-            offs = per_cell_offsets.get(i, {})
+            if debug:
+                c.setStrokeColorRGB(1,0,0)
+                c.rect(x0, y0-alto_bol, ancho_bol, alto_bol, stroke=1, fill=0)
+                c.setStrokeColorRGB(0,0,1)
+                c.line(cx-10, cy, cx+10, cy)
+                c.line(cx, cy-10, cx, cy+10)
 
-            # 1) rejilla 5×5 + QR
-            bb_w, bb_h = size_celda*5, size_celda*5
-            bx0 = cx - bb_w/2 + GRID_OFFSET_X + offs.get("grid_x", 0)
-            by0 = cy + bb_h/2 + GRID_OFFSET_Y + offs.get("grid_y", 0)
+            # ── Fusionar offsets globales y específicos ──
+            offsets = default_offsets.copy()
+            if idx_in_page in per_cell_offsets:
+                offsets.update(per_cell_offsets[idx_in_page])
+
+            # ── 1) BLOQUE 5×5 ROTADO Y DESPLAZADO ──
+            bb_w = size_celda * 5
+            bb_h = size_celda * 5
+            bx0 = cx - bb_w/2 + offsets['grid_x']
+            by0 = cy + bb_h/2 + offsets['grid_y']
 
             c.saveState()
             c.translate(cx, cy)
             c.rotate(CELL_ROT)
             c.translate(-cx, -cy)
-            c.setFont("Helvetica-Bold", SIZE_NUM)
+
+            c.setLineWidth(1.2)
+            c.setFont('Helvetica-Bold', SIZE_NUM)
             for r in range(5):
-                for j, letra in enumerate("bingo"):
+                for j, letra in enumerate('bingo'):
                     x = bx0 + j*size_celda
                     y = by0 - r*size_celda
-                    if letra=="n" and r==2:
-                        qr = qrcode.make(f"{ids[pos]}|{fecha_sorteo}")
+                    val = str(row.get(f"{letra}{r+1}", "-"))
+                    if letra=='n' and r==2:
+                        data = f"Boleto:{ids[pos]}\nSerie:{SERIE_MAP.get(nombre,nombre)}\nFecha:{fecha_sorteo}"
+                        qr = qrcode.make(data)
                         qr_buf = BytesIO()
-                        qr.save(qr_buf, "PNG")
+                        qr.save(qr_buf, format='PNG')
                         qr_buf.seek(0)
-                        c.drawImage(
-                            ImageReader(qr_buf),
-                            x+1, y+1,
-                            size_celda-2, size_celda-2
-                        )
+                        c.drawImage(ImageReader(qr_buf),
+                                    x+1, y+1,
+                                    size_celda-2, size_celda-2)
                     else:
-                        v = str(row.get(f"{letra}{r+1}", "-"))
                         c.drawCentredString(
                             x + size_celda/2,
                             y + size_celda*0.28,
-                            v
+                            val
                         )
             c.restoreState()
 
-            # 2) línea de info rotada
-            x_info = x0 + INFO_DX + offs.get("info_x", 0)
-            y_info = y0 - size_celda*5 + INFO_DY + offs.get("info_y", 0)
-
+            # ── 2) INFO ROTADA ──
+            info = f"{pos+1}{SERIE_MAP.get(nombre,nombre)} | {fecha_sorteo} | ${valor} | {telefono}"
+            tx = x0 + ancho_bol/2 + offsets['info_x']
+            ty = y0 - alto_bol/2 + offsets['info_y']
             c.saveState()
-            c.translate(x_info, y_info)
+            c.translate(tx, ty)
             c.rotate(INFO_ROT)
-
-            boleto_text = f"{ids[pos]}{SERIE_MAP.get(nombre, nombre)}"
-            c.setFont("Helvetica-Bold", SIZE_ID)
-            c.drawString(0, 0, boleto_text)
-
-            resto = f"  | {fecha_sorteo} | ${valor} | {telefono}"
-            c.setFont("Helvetica", SIZE_INFO)
-            dx = c.stringWidth(boleto_text, "Helvetica-Bold", SIZE_ID) + 5
-            c.drawString(dx, 0, resto)
+            c.setFont('Helvetica-Bold', INFO_FSIZE)
+            c.drawString(0, 0, info)
             c.restoreState()
 
-            # 3) icono de reintegro rotado
-            ix = x0 + REINT_DX + offs.get("rein_x", 0)
-            iy = y0 + REINT_DY + offs.get("rein_y", 0)
-
-            if pos in esp_idx and reintegro_especial:
+            # ── 3) ICONO DE REINTEGRO ROTADO Y POSICIONADO ──
+            ix = x0 + offsets['rein_x']
+            iy = y0 - offsets['rein_y']
+            if pos in idx_esp and reintegro_especial:
                 img_name = reintegro_especial
-            elif pos in ale_idx and reintegros:
-                others = [r for r in reintegros if r != reintegro_especial]
-                img_name = random.choice(others) if others else None
+            elif pos in idx_ale and reintegros:
+                rem = [r for r in reintegros if r!=reintegro_especial]
+                img_name = random.choice(rem) if rem else None
             else:
                 img_name = None
 
             if img_name:
                 ruta = os.path.join(REINTEGROS_DIR, img_name)
-                c.saveState()
-                c.translate(ix + REINT_W/2, iy + REINT_H/2)
-                c.rotate(REINT_ROT)
-                c.translate(-ix - REINT_W/2, -iy - REINT_H/2)
-                c.drawImage(ruta, ix, iy, REINT_W, REINT_H, mask="auto")
-                c.restoreState()
+                if os.path.exists(ruta):
+                    c.saveState()
+                    c.translate(ix + REINT_W/2, iy + REINT_H/2)
+                    c.rotate(REINT_ROT)
+                    c.translate(-ix - REINT_W/2, -iy - REINT_H/2)
+                    c.drawImage(ruta, ix, iy, REINT_W, REINT_H, mask='auto')
+                    c.restoreState()
 
-        c.restoreState()
         c.showPage()
 
     c.save()
-    buf.seek(0)
-    return buf
-
-
-
-
+    buffer.seek(0)
+    return buffer
 
 
 
@@ -1409,6 +1442,19 @@ def generar_pdf_planilla(ids, serie_archivo, vendedor, fecha, inicio, fin, serie
 
 
 #fin de asignar planillas
+
+
+
+
+
+
+
+@app.route("/asignar_planillas")
+def asignar_planillas():
+    if not requiere_clave("asignar_planillas"):
+        return redirect(url_for('pedir_clave', seccion="asignar_planillas"))
+    return "<h2>Página de Asignación de Planillas (en construcción)</h2>"
+
 
 
 
