@@ -134,7 +134,7 @@
       opacity: 0.12;
       pointer-events: none;
     }
-    /* Gráfica Pie */
+    /* Gráficas */
     .charts-area {
       display: flex;
       gap: 38px;
@@ -161,12 +161,18 @@
     }
     @media (max-width: 1100px) {
       .resumen-grid, .charts-area { flex-direction: column; }
-      .kpi-card, .chart-container { min-width: 90vw; margin-right: 0;}
+      .kpi-card, .chart-container { min-width: 90vw; margin-right: 0; }
     }
     @media (max-width: 900px) {
       .main-container { flex-direction: column; }
-      .sidebar { flex-direction: row; width: 100%; min-width: unset; justify-content: space-around; padding: 18px 0;}
-      .main-content { padding: 18px 7px;}
+      .sidebar {
+        flex-direction: row;
+        width: 100%;
+        min-width: unset;
+        justify-content: space-around;
+        padding: 18px 0;
+      }
+      .main-content { padding: 18px 7px; }
     }
   </style>
 </head>
@@ -182,13 +188,22 @@
       <a href="/impresion" class="menu-btn">🖨️ Impresión de Cartones</a>
       <a href="/asignar_planillas" class="menu-btn">📄 Asignación de Planillas</a>
       <a href="/vendedores" class="menu-btn">👥 Vendedores</a>
-      <a href="/dashboard_contabilidad" class="menu-btn">📊 
-Contabilidad</a>
+      <a href="/dashboard_contabilidad" class="menu-btn">📊 Contabilidad</a>
+
+      <!-- NUEVO: Generar Sorteo -->
+      <a href="/generar_sorteo"
+         class="menu-btn"
+         target="_blank"
+         style="background:#28a745; color:#fff; font-weight:bold;">
+        🎰 Generar Sorteo
+      </a>
+
       <button class="menu-btn" onclick="abrirModalUsuarios()" style="background:#ffd803;color:#21263a;font-weight:bold;">
         👤 Administrar Usuarios
       </button>
       <a href="/logout" class="menu-btn cerrar-sesion">🚪 Cerrar Sesión</a>
     </div>
+
     <!-- Contenido principal -->
     <div class="main-content">
       {% block content %}
@@ -233,9 +248,9 @@ Contabilidad</a>
           <span class="kpi-icon">🧾</span>
         </div>
       </div>
+
       <!-- GRAFICAS -->
       <div class="charts-area">
-        <!-- Gráfica pastel -->
         <div class="chart-container">
           <div class="chart-title">Distribución de Ventas</div>
           <canvas id="chartVentas" width="160" height="160"></canvas>
@@ -244,18 +259,19 @@ Contabilidad</a>
             <span style="font-size:0.97em;"><span style="background:#4ecca3; border-radius:4px; padding:2px 10px;"></span> Devueltos</span>
           </div>
         </div>
-        <!-- Gráfica de barras simple -->
         <div class="chart-container" style="min-width: 320px;">
           <div class="chart-title">Evolución de Ventas</div>
           <canvas id="barrasVentas" width="280" height="160"></canvas>
         </div>
       </div>
+
       <div style="margin-top:36px;color:#a0a6c1; font-size:0.99em;">
         <strong>Tip:</strong> Usa el menú izquierdo para navegar entre módulos.
       </div>
       {% endblock %}
     </div>
   </div>
+
   <script>
     // Pie chart
     window.onload = function() {
@@ -290,8 +306,8 @@ Contabilidad</a>
       ctx.textAlign = "center";
       ctx.fillText(vendidos, 80, 98);
 
-      // Bar chart simple (ejemplo, puedes poner datos reales desde Flask si quieres)
-      const ventasBar = [30, 60, 45, 80, 95, 50, 110]; // Cambia por tus datos reales (días, semanas, meses)
+      // Bar chart simple
+      const ventasBar = [30, 60, 45, 80, 95, 50, 110];
       const ctxBar = document.getElementById('barrasVentas').getContext('2d');
       ctxBar.clearRect(0, 0, 280, 160);
       // Fondo
@@ -305,10 +321,8 @@ Contabilidad</a>
         const h = Math.round((val/maxVal)*100);
         ctxBar.fillStyle = "#ffd803";
         ctxBar.fillRect(x, 140-h, barWidth, h);
-        // Sombra
         ctxBar.fillStyle = "#ffd80355";
         ctxBar.fillRect(x, 140, barWidth, 12);
-        // Etiqueta
         ctxBar.fillStyle = "#fff";
         ctxBar.font = "0.9em Poppins,Arial";
         ctxBar.fillText(val, x+barWidth/2, 130-h, 32);
@@ -328,19 +342,18 @@ Contabilidad</a>
       });
     }
   </script>
-<div id="modalUsuarios" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(20,22,40,0.88); z-index:999; align-items:center; justify-content:center;">
-  <div style="background:#232946; border-radius:20px; padding:38px 42px 26px 42px; min-width:320px; box-shadow:0 8px 40px #0009; position:relative; color:#fff; border:2px solid #ffd803; display:flex; flex-direction:column; align-items:center;">
-    <span onclick="cerrarModalUsuarios()" style="position:absolute; right:24px; top:16px; font-size:2.1em; color:#ffd803; cursor:pointer;">&times;</span>
-    <div style="font-size:1.33em; font-weight:800; margin-bottom:16px; color:#ffd803;">Administrar Usuarios</div>
-    <form id="formAgregarUsuario" style="width:100%;display:flex;flex-direction:column;align-items:center;">
-      <input type="text" name="nuevo_usuario" placeholder="Nuevo usuario" required style="width:90%;margin-bottom:12px;padding:10px 18px;font-size:1.07em;border-radius:9px;border:1px solid #333;background:#1c1f3a;color:#ffd803;">
-      <input type="password" name="nueva_clave" placeholder="Nueva clave" required style="width:90%;margin-bottom:14px;padding:10px 18px;font-size:1.07em;border-radius:9px;border:1px solid #333;background:#1c1f3a;color:#ffd803;">
-      <button type="submit" style="background:#ffd803;color:#191f2e;font-weight:700;font-size:1.09em;border:none;border-radius:9px;padding:11px 28px;margin-top:7px;cursor:pointer;box-shadow:0 2px 12px #ffd80377;">Agregar Usuario</button>
-    </form>
-    <div id="listaUsuarios" style="width:92%;margin-top:18px;text-align:left;"></div>
-  </div>
-</div>
 
+  <div id="modalUsuarios" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(20,22,40,0.88); z-index:999; align-items:center; justify-content:center;">
+    <div style="background:#232946; border-radius:20px; padding:38px 42px 26px 42px; min-width:320px; box-shadow:0 8px 40px #0009; position:relative; color:#fff; border:2px solid #ffd803; display:flex; flex-direction:column; align-items:center;">
+      <span onclick="cerrarModalUsuarios()" style="position:absolute; right:24px; top:16px; font-size:2.1em; color:#ffd803; cursor:pointer;">&times;</span>
+      <div style="font-size:1.33em; font-weight:800; margin-bottom:16px; color:#ffd803;">Administrar Usuarios</div>
+      <form id="formAgregarUsuario" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+        <input type="text" name="nuevo_usuario" placeholder="Nuevo usuario" required style="width:90%;margin-bottom:12px;padding:10px 18px;font-size:1.07em;border-radius:9px;border:1px solid #333;background:#1c1f3a;color:#ffd803;">
+        <input type="password" name="nueva_clave" placeholder="Nueva clave" required style="width:90%;margin-bottom:14px;padding:10px 18px;font-size:1.07em;border-radius:9px;border:1px solid #333;background:#1c1f3a;color:#ffd803;">
+        <button type="submit" style="background:#ffd803;color:#191f2e;font-weight:700;font-size:1.09em;border:none;border-radius:9px;padding:11px 28px;margin-top:7px;cursor:pointer;box-shadow:0 2px 12px #ffd80377;">Agregar Usuario</button>
+      </form>
+      <div id="listaUsuarios" style="width:92%;margin-top:18px;text-align:left;"></div>
+    </div>
+  </div>
 </body>
 </html>
-

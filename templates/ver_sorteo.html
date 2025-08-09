@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Detalles del Sorteo</title>
+</head>
+<body>
+  <h1>Detalles del Sorteo ID {{ sorteo.id }}</h1>
+  <ul>
+    <li>Fecha: {{ sorteo.fecha }}</li>
+    <li>Identificador: {{ sorteo.identificador }}</li>
+    <li>Estado: {{ sorteo.estado }}</li>
+    <li>Cantidad Boletos: {{ sorteo.cantidad_boletos }}</li>
+    <li>Valor Boleto: {{ sorteo.valor_boleto }}</li>
+    <li>Valor Premios: {{ sorteo.valor_premios }}</li>
+    <li>Serie: {{ sorteo.serie }}</li>
+    <li>Plantilla: {{ sorteo.plantilla }}</li>
+    <li>Premio Gordo: {{ sorteo.premio_gordo }}</li>
+  </ul>
+  <a href="{{ url_for('generar_sorteo') }}">Volver</a>
+</body>
+</html>

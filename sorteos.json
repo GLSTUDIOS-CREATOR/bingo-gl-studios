@@ -1,0 +1,137 @@
+[
+  {
+    "id": 1,
+    "fecha": "2025-06-27",
+    "identificador": null,
+    "cantidad_boletos": null,
+    "valor_premios": null,
+    "valor_boleto": null,
+    "serie": null,
+    "plantilla": null,
+    "premio_gordo": null,
+    "solo_vendidos": false,
+    "caja_cerrada": false,
+    "estado": "Activo",
+    "planillas": [
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_Manila.xlsx",
+        "inicio": 1,
+        "fin": 40,
+        "planillas": 1
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_Manila.xlsx",
+        "inicio": 1,
+        "fin": 40,
+        "planillas": 1
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_Manila.xlsx",
+        "inicio": 1,
+        "fin": 40,
+        "planillas": 1
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_Manila.xlsx",
+        "inicio": 1,
+        "fin": 40,
+        "planillas": 1
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib1.xlsx",
+        "inicio": 1,
+        "fin": 6000,
+        "planillas": 200
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib1.xlsx",
+        "inicio": 1,
+        "fin": 6000,
+        "planillas": 200
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib1.xlsx",
+        "inicio": 1,
+        "fin": 6000,
+        "planillas": 200
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib1.xlsx",
+        "inicio": 1,
+        "fin": 40,
+        "planillas": 1
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib2.xlsx",
+        "inicio": 1,
+        "fin": 4000,
+        "planillas": 133
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib3.xlsx",
+        "inicio": 1,
+        "fin": 600,
+        "planillas": 20
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib1.xlsx",
+        "inicio": 1,
+        "fin": 600,
+        "planillas": 20
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_Manila.xlsx",
+        "inicio": 1,
+        "fin": 300,
+        "planillas": 10
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib1.xlsx",
+        "inicio": 1,
+        "fin": 350,
+        "planillas": 11
+      },
+      {
+        "vendedor": "SIN_NOMBRE",
+        "archivo": "Srs_ib2.xlsx",
+        "inicio": 1,
+        "fin": 400,
+        "planillas": 13
+      }
+    ],
+    "boletos_impresos": {
+      "serie": "Srs_ib2.xlsx",
+      "inicio": "1",
+      "fin": "400",
+      "cantidad": 400,
+      "fecha": "2025-08-09"
+    }
+  },
+  {
+    "id": 2,
+    "fecha": "2025-06-27",
+    "identificador": "1",
+    "cantidad_boletos": null,
+    "valor_premios": null,
+    "valor_boleto": null,
+    "serie": null,
+    "plantilla": null,
+    "premio_gordo": null,
+    "solo_vendidos": false,
+    "caja_cerrada": false,
+    "estado": "Inactivo"
+  }
+]

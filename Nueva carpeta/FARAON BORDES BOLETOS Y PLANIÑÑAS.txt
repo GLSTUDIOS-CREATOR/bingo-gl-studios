@@ -1,0 +1,512 @@
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+REINTEGROS_DIR = os.path.join(DATA_DIR, "REINTEGROS")
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+
+
+
+# ── CONSTANTES DE DISEÑO ──
+COLUMNAS      = 2      # boletos por fila
+FILAS         = 4      # filas de boletos por página
+MARGEN_H      = 14     # margen general (izq/dcha hoja)
+ESPACIO_H     = 35     # espacio horizontal entre celdas
+ESPACIO_V     = 35     # espacio vertical entre celdas
+
+GRID_SCALE    = 0.9    # compacidad del bloque 5×5 (0.0–1.0)
+CELL_ROT      = -90    # rotación de la rejilla de números
+GRID_OFFSET_X =  +60   # desplazamiento horizontal global de la rejilla
+GRID_OFFSET_Y =  -10   # desplazamiento vertical global de la rejilla
+
+SIZE_NUM      = 20     # tamaño fuente de los números
+
+INFO_FSIZE    = 10     # tamaño de fuente de la línea de info
+INFO_ROT      = -90    # rotación de la línea de info
+INFO_DX       = -140   # desplazamiento X global de la info
+INFO_DY       =   80   # desplazamiento Y global de la info
+
+REINT_W       = 50     # ancho del icono de reintegro
+REINT_H       = 50     # alto del icono de reintegro
+REINT_ROT     = -90    # rotación del icono de reintegro
+REINT_DX      = -REINT_W + 260  # desplazamiento X global del reintegro
+REINT_DY      = +170            # desplazamiento Y global del reintegro
+
+# ── Offsets específicos por boleto (0-based) ──
+per_cell_offsets = {
+    0: {'grid_x': +0,  'grid_y': -70, 'rein_x':REINT_DX-30,      'rein_y': REINT_DY -5},
+    1: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    2: {'grid_x': +0, 'grid_y':  -70, 'rein_x':REINT_DX-30,      'rein_y': REINT_DY -5},
+    3: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    4: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    5: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    6: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+    7: {'grid_x': +0, 'grid_y': -70, 'rein_x': REINT_DX-30,      'rein_y': REINT_DY -5},
+}
+
+
+# ── MAPEADO DE SERIES ──
+SERIE_MAP = {
+    "Srs_ib1.xlsx": "V",
+    "Srs_ib2.xlsx": "+",
+    "Srs_ib3.xlsx": "&",
+    "Srs_Manila.xlsx": "M"
+}
+
+@app.route('/impresion', methods=['GET', 'POST'])
+def impresion():
+    files = sorted(f for f in os.listdir(DATA_DIR) if f.lower().endswith('.xlsx'))
+    series = [(f, SERIE_MAP.get(f, f)) for f in files]
+
+    reintegros = sorted(f for f in os.listdir(REINTEGROS_DIR) if f.lower().endswith('.png'))
+    fecha_hoy = date.today().strftime('%Y-%m-%d')
+
+    if request.method == 'POST':
+        form_type = request.form.get('form_type')
+
+        if form_type == "boletos":
+            nombre = request.form['serie_archivo']
+            start = request.form.get('serie_inicio', '')
+            end = request.form.get('serie_fin', '')
+            valor = request.form['valor']
+            telefono = request.form['telefono']
+            fecha_sorteo = request.form.get('fecha_sorteo', fecha_hoy)
+            reintegro_especial = request.form.get('reintegro_especial', '')
+            cant_reintegro_especial = int(request.form.get('cant_reintegro_especial', 0))
+            incluir_aleatorio = (request.form.get('incluir_aleatorio', '1') == '1')
+
+            path = os.path.join(DATA_DIR, nombre)
+            df = pd.read_excel(path, dtype=str).fillna('')
+            ids = df[df.columns[0]].astype(str).tolist()
+            if start and start in ids:
+                ids = ids[ids.index(start):]
+            if end and end in ids:
+                ids = ids[:ids.index(end) + 1]
+            boletos = df[df[df.columns[0]].astype(str).isin(ids)]
+
+            pdf_buf = generar_pdf_boletos_excel(
+                ids, boletos, valor, telefono, nombre,
+                reintegro_especial, cant_reintegro_especial,
+                reintegros, incluir_aleatorio, fecha_sorteo
+            )
+
+            sorteos = cargar_sorteos()
+            activo = next((s for s in sorteos if s['estado'] == 'Activo'), None)
+            if activo:
+                activo['boletos_impresos'] = {
+                    "serie": nombre,
+                    "inicio": ids[0],
+                    "fin": ids[-1],
+                    "cantidad": len(ids),
+                    "fecha": fecha_sorteo
+                }
+                guardar_sorteos(sorteos)
+
+            return send_file(pdf_buf, download_name='boletos_bingo.pdf', as_attachment=True)
+
+        elif form_type == "planilla":
+            archivo = request.form['serie_archivo_planilla']
+            inicio = int(request.form['planilla_inicio'])
+            fin = int(request.form['planilla_fin'])
+            fecha_planilla = request.form['fecha_planilla']
+
+            path = os.path.join(DATA_DIR, archivo)
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"El archivo {path} no existe. Verifica tus archivos.")
+
+            if archivo.lower().endswith('.csv'):
+                df = pd.read_csv(path, dtype=str).fillna('')
+            else:
+                df = pd.read_excel(path, dtype=str).fillna('')
+
+            ids = df[df.columns[0]].astype(str).tolist()[inicio-1:fin]
+
+            BOLETOS_X_PLANILLA = 40
+            merger = PdfMerger()
+            for i in range(0, len(ids), BOLETOS_X_PLANILLA):
+                bloque_ids = ids[i:i + BOLETOS_X_PLANILLA]
+                bloque_ini = inicio + i
+                bloque_fin = min(bloque_ini + BOLETOS_X_PLANILLA - 1, fin)
+                num_planilla = (i // BOLETOS_X_PLANILLA) + 1
+
+                planilla_buf = generar_pdf_planilla(
+                    bloque_ids, archivo, 'SIN_NOMBRE',
+                    fecha_planilla, bloque_ini, bloque_fin,
+                    SERIE_MAP, num_planilla
+                )
+                merger.append(planilla_buf)
+
+            out = BytesIO()
+            merger.write(out)
+            out.seek(0)
+
+            sorteos = cargar_sorteos()
+            activo = next((s for s in sorteos if s['estado'] == 'Activo'), None)
+            if activo:
+                if 'planillas' not in activo:
+                    activo['planillas'] = []
+                activo['planillas'].append({
+                    "vendedor": "SIN_NOMBRE",
+                    "archivo": archivo,
+                    "inicio": inicio,
+                    "fin": fin,
+                    "planillas": (fin - inicio + 1) // 30
+                })
+                guardar_sorteos(sorteos)
+
+            return send_file(out, download_name='planilla_vendedor.pdf', as_attachment=True)
+
+    return render_template(
+        'impresion_boletos_excel.html',
+        series=series,
+        reintegros=reintegros,
+        fecha_hoy=fecha_hoy
+    )
+                 
+
+POSICIONES_FILE = os.path.join(DATA_DIR, "posiciones_boletos.json")
+
+@app.route('/editor_boletos', methods=['GET', 'POST'])
+def editor_boletos():
+    if request.method == 'POST':
+        # Recibir JSON del front-end y guardar en archivo
+        posiciones = request.get_json()
+        with open(POSICIONES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(posiciones, f, indent=2)
+        return jsonify({"success": True, "msg": "Posiciones guardadas correctamente."})
+    return render_template('editor_boletos.html')    
+
+
+
+
+
+
+def generar_pdf_boletos_excel(
+    ids, boletos, valor, telefono,
+    nombre, reintegro_especial,
+    cant_especial, reintegros,
+    incluir_aleatorio, fecha_sorteo,
+    debug: bool = False
+):
+    """
+    Genera un PDF A4 con 8 boletos (2×4). Cada boleto incluye:
+      1) Rejilla 5×5 de números (compactada y rotada CELL_ROT),
+         desplazada individualmente según per_cell_offsets.
+      2) Línea de info rotada (serie|fecha|valor|tel).
+      3) Icono de reintegro rotado y posicionado.
+    """
+    # Offsets por defecto (globales)
+    default_offsets = {
+        'grid_x': GRID_OFFSET_X,
+        'grid_y': GRID_OFFSET_Y,
+        'info_x': INFO_DX,
+        'info_y': INFO_DY,
+        'rein_x': REINT_DX,
+        'rein_y': REINT_DY,
+    }
+
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    ancho_pg, alto_pg = A4
+
+    # ── Tamaño de cada “celda de boleto” ──
+    ancho_bol = (ancho_pg - 2*MARGEN_H - ESPACIO_H*(COLUMNAS-1)) / COLUMNAS
+    alto_bol  = (alto_pg  - 2*MARGEN_H - ESPACIO_V*(FILAS-1))    / FILAS
+
+    # ── Tamaño de cada casilla dentro del bloque 5×5 ──
+    size_celda = min(ancho_bol, alto_bol) * GRID_SCALE / 5
+
+    # índices para reintegros especiales y aleatorios
+    N = len(boletos)
+    idx_esp = random.sample(range(N), min(N, cant_especial)) if reintegro_especial else []
+    idx_ale = [i for i in range(N) if i not in idx_esp] if incluir_aleatorio else []
+
+    # convertir DataFrame a lista de dicts si hace falta
+    if hasattr(boletos, 'to_dict'):
+        boletos = boletos.to_dict(orient='records')
+
+    # ── Recorremos páginas de 8 boletos ──
+    for start in range(0, N, COLUMNAS*FILAS):
+        chunk = boletos[start:start + COLUMNAS*FILAS]
+        for idx_in_page, row in enumerate(chunk):
+            pos = start + idx_in_page
+            col = idx_in_page % COLUMNAS
+            fil = idx_in_page // COLUMNAS
+
+            # esquina sup-izq de la celda de boleto
+            x0 = MARGEN_H + col*(ancho_bol + ESPACIO_H)
+            y0 = alto_pg - MARGEN_H - fil*(alto_bol + ESPACIO_V)
+            cx = x0 + ancho_bol/2
+            cy = y0 - alto_bol/2
+
+            if debug:
+                c.setStrokeColorRGB(1,0,0)
+                c.rect(x0, y0-alto_bol, ancho_bol, alto_bol, stroke=1, fill=0)
+                c.setStrokeColorRGB(0,0,1)
+                c.line(cx-10, cy, cx+10, cy)
+                c.line(cx, cy-10, cx, cy+10)
+
+            # ── Fusionar offsets globales y específicos ──
+            offsets = default_offsets.copy()
+            if idx_in_page in per_cell_offsets:
+                offsets.update(per_cell_offsets[idx_in_page])
+
+            # ── 1) BLOQUE 5×5 ROTADO Y DESPLAZADO ──
+            bb_w = size_celda * 5
+            bb_h = size_celda * 5
+            bx0 = cx - bb_w/2 + offsets['grid_x']
+            by0 = cy + bb_h/2 + offsets['grid_y']
+
+            c.saveState()
+            c.translate(cx, cy)
+            c.rotate(CELL_ROT)
+            c.translate(-cx, -cy)
+
+            c.setLineWidth(1.2)
+            c.setFont('Helvetica-Bold', SIZE_NUM)
+            for r in range(5):
+                for j, letra in enumerate('bingo'):
+                    x = bx0 + j*size_celda
+                    y = by0 - r*size_celda
+                    val = str(row.get(f"{letra}{r+1}", "-"))
+                    if letra=='n' and r==2:
+                        data = f"Boleto:{ids[pos]}\nSerie:{SERIE_MAP.get(nombre,nombre)}\nFecha:{fecha_sorteo}"
+                        qr = qrcode.make(data)
+                        qr_buf = BytesIO()
+                        qr.save(qr_buf, format='PNG')
+                        qr_buf.seek(0)
+                        c.drawImage(ImageReader(qr_buf),
+                                    x+1, y+1,
+                                    size_celda-2, size_celda-2)
+                    else:
+                        c.drawCentredString(
+                            x + size_celda/2,
+                            y + size_celda*0.28,
+                            val
+                        )
+            c.restoreState()
+
+            # ── 2) INFO ROTADA ──
+            info = f"{pos+1}{SERIE_MAP.get(nombre,nombre)} | {fecha_sorteo} | ${valor} | {telefono}"
+            tx = x0 + ancho_bol/2 + offsets['info_x']
+            ty = y0 - alto_bol/2 + offsets['info_y']
+            c.saveState()
+            c.translate(tx, ty)
+            c.rotate(INFO_ROT)
+            c.setFont('Helvetica-Bold', INFO_FSIZE)
+            c.drawString(0, 0, info)
+            c.restoreState()
+
+            # ── 3) ICONO DE REINTEGRO ROTADO Y POSICIONADO ──
+            ix = x0 + offsets['rein_x']
+            iy = y0 - offsets['rein_y']
+            if pos in idx_esp and reintegro_especial:
+                img_name = reintegro_especial
+            elif pos in idx_ale and reintegros:
+                rem = [r for r in reintegros if r!=reintegro_especial]
+                img_name = random.choice(rem) if rem else None
+            else:
+                img_name = None
+
+            if img_name:
+                ruta = os.path.join(REINTEGROS_DIR, img_name)
+                if os.path.exists(ruta):
+                    c.saveState()
+                    c.translate(ix + REINT_W/2, iy + REINT_H/2)
+                    c.rotate(REINT_ROT)
+                    c.translate(-ix - REINT_W/2, -iy - REINT_H/2)
+                    c.drawImage(ruta, ix, iy, REINT_W, REINT_H, mask='auto')
+                    c.restoreState()
+
+        c.showPage()
+
+    c.save()
+    buffer.seek(0)
+    return buffer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def generar_pdf_planilla(ids, serie_archivo, vendedor, fecha, inicio, fin, serie_map, num_planilla=None):
+    from io import BytesIO
+    from datetime import datetime
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.utils import ImageReader
+    from reportlab.platypus import Table, TableStyle
+    from reportlab.lib import colors
+    import os, qrcode
+
+    # — Formatear fecha en español —
+    dt = datetime.strptime(fecha, "%Y-%m-%d")
+    dias   = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
+    meses  = {
+        1:"Enero",2:"Febrero",3:"Marzo",4:"Abril",
+        5:"Mayo",6:"Junio",7:"Julio",8:"Agosto",
+        9:"Septiembre",10:"Octubre",11:"Noviembre",12:"Diciembre"
+    }
+    formatted_date = f"{dias[dt.weekday()]}, {dt.day} de {meses[dt.month]} del {dt.year}"
+    fecha_limpia   = dt.strftime("%Y%m%d")
+    serie_letra    = serie_map.get(serie_archivo, "")
+
+    # — Rangos —
+    left_desde  = inicio
+    left_hasta  = min(inicio + 19, fin)
+    right_desde = inicio + 20
+    right_hasta = min(inicio + 39, fin)
+    full_desde  = inicio
+    full_hasta  = min(inicio + 39, fin)
+
+    # — Generadores de cadena QR —
+    def qr_cadena(tipo, desde, hasta, serie):
+        return f"SORTEO{fecha_limpia}{tipo}A{desde}A{hasta}{serie}"
+
+    # — Preparar canvas —
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=landscape(A4))
+    ancho, alto = landscape(A4)
+
+    # — Márgenes y constantes —
+    M_LEFT, M_RIGHT, M_BOTTOM = 20, 20, 20
+    GUTTER, HEADER_H, QR_SIZE = 20, 60, 40
+
+    # — Área útil para tablas —
+    HALF_W  = (ancho - M_LEFT - M_RIGHT - GUTTER) / 2
+    TOP_Y   = alto - HEADER_H - 5
+    BOT_Y   = M_BOTTOM
+    AVAIL_H = TOP_Y - BOT_Y
+
+    # — Filas y altura dinámica —
+    NUM_ROWS = 21
+    ROW_H    = AVAIL_H / NUM_ROWS
+
+    # — Posiciones X y ancho de tabla —
+    X_L, X_R = M_LEFT, M_LEFT + HALF_W + GUTTER
+    TABLE_W  = HALF_W - 20
+    PAD      = 10
+
+    # — Recursos y fuentes —
+    LOGO_PATH = os.path.join("static","golpe_suerte_logo.png")
+    FB, FR    = "Helvetica-Bold", "Helvetica"
+
+    # — Índices de planilla según rango —
+    left_index  = (left_desde - 1) // 20 + 1
+    right_index = (right_desde - 1) // 20 + 1
+
+    # — Función: dibuja header en x0 con QR de su rango —
+    def draw_header(x0, sheet_num, tipo, desde, hasta):
+        # fondo gris
+        c.setFillColorRGB(0.9,0.9,0.9)
+        c.rect(x0, alto - HEADER_H, HALF_W, HEADER_H, fill=1, stroke=0)
+        c.setFillColor(colors.black)
+
+        # logo grande manteniendo proporción
+        img = ImageReader(LOGO_PATH)
+        ow, oh = img.getSize()
+        dh = HEADER_H - 4
+        dw = dh * ow / oh
+        c.drawImage(img,
+                    x0 + 8,
+                    alto - HEADER_H + 2,
+                    width=dw, height=dh,
+                    mask="auto")
+
+        # recuadros de fecha
+        box_w = HALF_W * 0.45
+        box_h = 20
+        bx = x0 + (HALF_W - box_w) / 2
+        by = alto - HEADER_H + 8
+        c.setLineWidth(1.5)
+        c.setFillColor(colors.white)
+        c.roundRect(bx, by + box_h + 4, box_w, box_h, 4, stroke=1, fill=1)  # vacío arriba
+        c.roundRect(bx, by,               box_w, box_h, 4, stroke=1, fill=1)  # fecha
+        c.setFillColor(colors.black)
+        c.setFont(FB, 10)
+        c.drawCentredString(bx + box_w/2, by + box_h/2 - 4, formatted_date)
+
+        # QR de rango para esta mitad
+        data_qr = qr_cadena(tipo, desde, hasta, serie_letra)
+        buf = BytesIO(); qrcode.make(data_qr).save(buf,format="PNG"); buf.seek(0)
+        qx = x0 + HALF_W - QR_SIZE - 8
+        qy = alto - HEADER_H + 8
+        c.drawImage(ImageReader(buf), qx, qy, QR_SIZE, QR_SIZE)
+
+        # recuadro del número a la izquierda del QR
+        pn_w, pn_h = 36, 28
+        px = qx - pn_w - 6
+        py = qy + (QR_SIZE - pn_h)/2
+        c.setFillColor(colors.white)
+        c.setLineWidth(1.5)
+        c.roundRect(px, py, pn_w, pn_h, 4, stroke=1, fill=1)
+        c.setFillColor(colors.black)
+        c.setFont(FB, 18)
+        c.drawCentredString(px + pn_w/2, py + pn_h/2 - 5, str(sheet_num))
+
+    # — Dibujar headers izquierdo y derecho con sus propios QR —
+    draw_header(X_L, left_index,  "L1", left_desde,  left_hasta)
+    draw_header(X_R, right_index, "L2", right_desde, right_hasta)
+
+    # — Línea divisoria central —
+    c.setLineWidth(2)
+    c.line(X_R, TOP_Y, X_R, BOT_Y)
+
+    # — QR central de rango completo (40 boletos) —
+    data_full = qr_cadena("RG", full_desde, full_hasta, serie_letra)
+    buf2 = BytesIO(); qrcode.make(data_full).save(buf2,format="PNG"); buf2.seek(0)
+    mid_y = BOT_Y + (AVAIL_H/2) - (QR_SIZE/2)
+    c.drawImage(ImageReader(buf2),
+                ancho/2 - QR_SIZE/2,
+                mid_y,
+                QR_SIZE, QR_SIZE)
+
+    # — Construir siempre 21 filas por tabla —
+    left_data = [["Boleto / Nombres Apellidos",""]]
+    for i in range(20):
+        n = inicio + i
+        left_data.append([str(n) if n <= fin else "", ""])
+    right_data = [["Boleto / Nombres Apellidos",""]]
+    for i in range(20):
+        n = inicio + 20 + i
+        right_data.append([str(n) if n <= fin else "", ""])
+
+    # — Recuadro en encabezado de tabla —
+    header_y = TOP_Y - ROW_H
+    c.setLineWidth(1.5)
+    c.roundRect(X_L + PAD, header_y, TABLE_W, ROW_H, 4, stroke=1, fill=0)
+    c.roundRect(X_R + PAD, header_y, TABLE_W, ROW_H, 4, stroke=1, fill=0)
+
+    # — Estilo de tabla —
+    from reportlab.platypus import Table
+    style = TableStyle([
+        ("SPAN",        (0,0),(1,0)),
+        ("FONT",        (0,0),(1,0), FB, 10),
+        ("ALIGN",       (0,0),(1,0),"CENTER"),
+        ("FONT",        (0,1),(0,-1), FB, 12),
+        ("FONT",        (1,1),(1,-1), FR, 8),
+        ("VALIGN",      (0,0),(-1,-1),"MIDDLE"),
+        ("INNERGRID",   (0,0),(-1,-1),1,colors.black),
+        ("BOX",         (0,0),(-1,-1),2,colors.black),
+        ("LEFTPADDING", (0,0),(-1,-1),3),
+        ("RIGHTPADDING",(0,0),(-1,-1),3),
+    ])
+
+    # — Renderizar tablas —
+    tblL = Table(left_data,  colWidths=[40, TABLE_W-40], rowHeights=[ROW_H]*NUM_ROWS)
+    tblL.setStyle(style); tblL.wrapOn(c,0,0); tblL.drawOn(c, X_L+PAD, BOT_Y)
+    tblR = Table(right_data, colWidths=[40, TABLE_W-40], rowHeights=[ROW_H]*NUM_ROWS)
+    tblR.setStyle(style); tblR.wrapOn(c,0,0); tblR.drawOn(c, X_R+PAD, BOT_Y)
+
+    c.save()
+    buffer.seek(0)
+    return buffer

@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "fecha": "2025-06-27",
+    "asignacion": {
+      "archivo": "Srs_ib1.xml",
+      "desde": 1,
+      "hasta": 600
+    },
+    "figuras": [],
+    "activo": false
+  },
+  {
+    "id": 2,
+    "fecha": "2025-06-27",
+    "asignacion": {
+      "archivo": "Srs_ib1.xml",
+      "desde": 1,
+      "hasta": 600
+    },
+    "figuras": [
+      "",
+      "",
+      "",
+      ""
+    ],
+    "activo": false
+  }
+]
